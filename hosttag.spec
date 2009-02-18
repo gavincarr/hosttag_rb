@@ -21,7 +21,10 @@ This package contains the hosttag client.
 
 %install
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
-mkdir %{buildroot}%{_bindir}
+mkdir -p %{buildroot}%{_bindir}
+install bin/hosttag %{buildroot}%{_bindir}
+cd %{buildroot}%{_bindir}
+ln -s hosttag ht
 
 %clean
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
