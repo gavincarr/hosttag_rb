@@ -1,5 +1,8 @@
-Adding hosttags: create host directories inside the (inner) data directory,
-and touch tag files within the host directories e.g.
+The server side of hosttag requires the TokyoCabinet DBM libraries and the
+TokyoTyrant network server, as well as the TokyoClient perl module.
+
+Then, to add hosttags: create host directories inside the (inner) data 
+directory, and touch tag files within the host directories e.g.
 
   cd data
   mkdir host1 host2 host3

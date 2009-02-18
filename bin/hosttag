@@ -15,11 +15,11 @@ import getopt, sys
 import urllib2
 
 def usage():
-    print 'usage: ' + sys.argv[0] + " [-a|-o] <tag1> [<tag2>]";
-    print '       ' + sys.argv[0] + " -h [-a|-o] <host1> [<host2>]";
+    print 'usage: ' + sys.argv[0] + " [-a|-o|-l] <tag1> [<tag2>]";
+    print '       ' + sys.argv[0] + " -h [-a|-o|-l] <host1> [<host2>]";
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], '?aoh', [ 'help', 'and', 'or', 'host' ])
+    opts, args = getopt.getopt(sys.argv[1:], '?aolh', [ 'help', 'and', 'or', 'list', 'host' ])
 except getopt.GetoptError, err:
     print str(err)
     usage()
@@ -35,6 +35,8 @@ for o, a in opts:
         rel = 'and'
     elif o in ('-o', '--or'):
         rel = 'or'
+    elif o in ('-l', '--list'):
+        rel = 'list'
     elif o in ('-h', '--host'):
         hostmode = 1
     else:
@@ -51,7 +53,8 @@ if len(args) > 1 and rel == None:
     usage()
     sys.exit(1)
 
-
+# Fetch data
+d = ()
 for arg in args:
     if hostmode:
         namespace = 'hosts'
@@ -63,7 +66,28 @@ for arg in args:
     usock = urllib2.urlopen( url )
     data = usock.read()
     usock.close()
+    data = data.rstrip()
 
-    print data,
+    # Special case single-arg request
+    if len(args) == 1:
+        print data
+        sys.exit(0)
+
+    if rel == 'list':
+        print '%s: %s' % ( arg, data )
+        continue
+
+    if not len(d):
+        d = set( data.split(' ') )
+        continue
+
+    if rel == 'and':
+        d = d.intersection( set( data.split(' ') ) )
+    elif rel == 'or':
+        d = d.union( set( data.split(' ') ) )
+
+if len(d):
+    print ' '.join(d)
+
 
 # vim:sw=4
