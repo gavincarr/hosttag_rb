@@ -1,0 +1,13 @@
+Adding hosttags: create host directories inside the (inner) data directory,
+and touch tag files within the host directories e.g.
+
+  cd data
+  mkdir host1 host2 host3
+  touch host1/{tag1,tag2,tag3}
+  touch host2/{tag1,tag2,tag3}
+
+and then go up a level and run 'make'
+
+  cd ..
+  make
+

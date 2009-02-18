@@ -1,0 +1,73 @@
+Hosttag: butt simple system of defining hosts and associating arbitrary tags 
+(groups, classes) with them. Usage:
+
+Querying:
+
+* ht <foo>
+
+  Show me all the hosts that have tag <foo> set
+
+
+* ht -a <tag1> <tag2>
+
+  Show me all the hosts that have <tag1> AND <tag2> set
+
+
+* ht -o <tag1> <tag2>
+
+  Show me all the hosts that have <tag1> OR <tag2> set
+
+
+* ht -h <host> <host2>
+
+  Show me all the tags on these hosts
+
+
+Setting:
+
+
+
+* htset -h <host1> [-h <host2>] <tag1> [<tag2> <tag3>]
+
+  Set tag(s) on this host
+
+
+* htset -t <tag> [-t <tag2>] <host1> [<host2> <host3>]
+
+  Set tag(s) on hosts
+  
+
+
+* htremove -h <bar> <tag1> <tag2> <tag3>
+
+  Remove these tags from this host
+
+
+* htremove -t <tag> <host1> <host2> <host3>
+
+  Remove this tag from these hosts
+  
+
+
+
+
+Implementation - filesystem:
+
++ hosts
+  o carbon
+  o dubnium
+
++ tags
+  o krw
+  o krw4
+  o centos5
+
+
+Implementation - web service:
+
+- GET http://hosttag/tags/TAG
+
+- GET http://hosttag/hosts/HOST
+
+- PUT http://hosttag/HOST/TAG
+

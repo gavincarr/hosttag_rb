@@ -1,0 +1,69 @@
+#!/usr/bin/python
+#
+# Simple hosttag client
+# 
+# Usage:
+#   ht <tag>
+#
+#   ht -a <tag1> <tag2>         Show hosts with tag1 AND tag2
+#   ht -o <tag1> <tag2>         Show hosts with tag1 OR tags2
+#
+#   ht -h <host>                Show tags on 'host'
+#
+
+import getopt, sys
+import urllib2
+
+def usage():
+    print 'usage: ' + sys.argv[0] + " [-a|-o] <tag1> [<tag2>]";
+    print '       ' + sys.argv[0] + " -h [-a|-o] <host1> [<host2>]";
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], '?aoh', [ 'help', 'and', 'or', 'host' ])
+except getopt.GetoptError, err:
+    print str(err)
+    usage()
+    sys.exit(1)
+
+rel = None
+hostmode = 0
+for o, a in opts:
+    if o in ('-?', '--help'):
+        usage()
+        sys.exit(0)
+    elif o in ('-a', '--and'):
+        rel = 'and'
+    elif o in ('-o', '--or'):
+        rel = 'or'
+    elif o in ('-h', '--host'):
+        hostmode = 1
+    else:
+        usage()
+        assert False, 'unhandled option'
+
+if len(args) < 1:
+    usage()
+    sys.exit(1)
+
+if len(args) > 1 and rel == None:
+    print "Multiple tags require -a or -o to be specified"
+    print
+    usage()
+    sys.exit(1)
+
+
+for arg in args:
+    if hostmode:
+        namespace = 'hosts'
+    else:
+        namespace = 'tags'
+    url = 'http://hosttag:1978/%s/%s' % ( namespace, arg )
+#   print url + ':'
+
+    usock = urllib2.urlopen( url )
+    data = usock.read()
+    usock.close()
+
+    print data,
+
+# vim:sw=4
