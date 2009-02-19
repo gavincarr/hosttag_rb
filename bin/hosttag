@@ -19,18 +19,21 @@ def usage():
     print '       ' + sys.argv[0] + " -h [-a|-o|-l] <host1> [<host2>]";
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], '?aolh', [ 'help', 'and', 'or', 'list', 'host' ])
+    opts, args = getopt.getopt(sys.argv[1:], '?Aaolh', [ 'help', 'all', 'and', 'or', 'list', 'host' ])
 except getopt.GetoptError, err:
     print str(err)
     usage()
-    sys.exit(1)
+    sys.exit(2)
 
 rel = None
+all = 0
 hostmode = 0
 for o, a in opts:
     if o in ('-?', '--help'):
         usage()
         sys.exit(0)
+    elif o in ('-A', '--all'):
+        all = 1
     elif o in ('-a', '--and'):
         rel = 'and'
     elif o in ('-o', '--or'):
@@ -43,15 +46,20 @@ for o, a in opts:
         usage()
         assert False, 'unhandled option'
 
+# Report all hosts with -A
+if all:
+    hostmode = 1
+    args = [ 'ALL' ]
+
 if len(args) < 1:
     usage()
-    sys.exit(1)
+    sys.exit(2)
 
 if len(args) > 1 and rel == None:
     print "Multiple tags require -a or -o to be specified"
     print
     usage()
-    sys.exit(1)
+    sys.exit(2)
 
 # Fetch data
 d = ()
@@ -63,7 +71,15 @@ for arg in args:
     url = 'http://hosttag:1978/%s/%s' % ( namespace, arg )
 #   print url + ':'
 
-    usock = urllib2.urlopen( url )
+    usock = None
+    try:
+        usock = urllib2.urlopen( url )
+    except urllib2.HTTPError, err:
+        if err.code == 404:
+            print 'Not Found.'
+        else:
+            print err
+        sys.exit(1)
     data = usock.read()
     usock.close()
     data = data.rstrip()

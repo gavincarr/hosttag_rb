@@ -1,4 +1,4 @@
 
-- add a -A flag to display all hosts
-- handle 404s more gracefully
++ add a -A flag to display all hosts
++ handle 404s more gracefully
 
