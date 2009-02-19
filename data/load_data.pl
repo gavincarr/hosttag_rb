@@ -49,6 +49,24 @@ for my $tag (keys %host) {
 }
 $db->put("hosts/ALL", join(' ', sort keys %tag));
 
+# Check for orphaned hosts/tags
+$db->iterinit;
+while (my $key = $db->iternext) {
+  if ($key =~ m! ^hosts/(.*)$ !x) {
+    my $host = $1;
+    next if exists $tag{$host};
+    next if $host eq 'ALL';
+    print "Deleting orphaned host '$host'\n";
+    $db->out($key);
+  }
+  elsif ($key =~ m! ^tags/(.*)$ !x) {
+    my $tag = $1;
+    next if exists $host{$tag};
+    print "Deleting orphaned tag '$tag'\n";
+    $db->out($key);
+  }
+}
+
 $db->close
   or die "DB $DB close failed: " . $db->errmsg( $db->ecode );
 
