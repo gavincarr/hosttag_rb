@@ -103,7 +103,7 @@ for arg in args:
         d = d.union( set( data.split(' ') ) )
 
 if len(d):
-    print ' '.join(d)
+    print ' '.join(sorted(d))
 
 
 # vim:sw=4
