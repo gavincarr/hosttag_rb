@@ -3,12 +3,11 @@
 use strict;
 
 use File::Basename;
-use YAML;
 use TokyoCabinet;
 
-my $DB = 'hosttag.tch';
+my $DB = '/var/lib/misc/hosttag.tch';
 
-my $data_dir = dirname($0) . "/data";
+my $data_dir = dirname($0);
 die "Cannot find data dir '$data_dir'" unless -d $data_dir;
 
 my %tag = ();
@@ -16,6 +15,8 @@ my %tag = ();
 # Load all data
 for my $host_dir (glob("$data_dir/*")) {
   next if $host_dir eq '.' || $host_dir eq '..';
+  next if ! -d $host_dir;
+
   my $host = basename $host_dir;
   
   for my $tag_file (glob("$host_dir/*")) {
@@ -33,8 +34,6 @@ for my $host (keys %tag) {
   }
 }
 
--f $DB  && unlink $DB;
-
 # Write database
 my $db = TokyoCabinet::HDB->new;
 $db->open( $DB, $db->OWRITER | $db->OCREAT )
@@ -51,3 +50,4 @@ for my $tag (keys %host) {
 
 $db->close
   or die "DB $DB close failed: " . $db->errmsg( $db->ecode );
+
