@@ -47,6 +47,7 @@ for my $tag (keys %host) {
   $db->put("tags/$tag", join(' ', sort @{ $host{$tag} }) . "\n")
     or die "DB $DB put failed: " . $db->errmsg( $db->ecode );
 }
+$db->put("hosts/ALL", join(' ', sort keys %tag));
 
 $db->close
   or die "DB $DB close failed: " . $db->errmsg( $db->ecode );
