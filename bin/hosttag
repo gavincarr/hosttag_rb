@@ -93,7 +93,7 @@ for arg in args:
         usock = urllib2.urlopen( url )
     except urllib2.HTTPError, err:
         if err.code == 404:
-            print >> sys.stderr, 'Error: ' + mode + ' not found.'
+            print >> sys.stderr, 'Error: ' + mode + ' ' + arg + ' not found.'
         else:
             print >> sys.stderr, err
         sys.exit(1)
