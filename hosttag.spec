@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.2
+Version: 0.3
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -34,6 +34,11 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{_bindir}/*
 
 %changelog
+* Thu Oct 01 2009 Gavin Carr <gavin@openfusion.com.au> 0.3
+- Change -h|--hosts parameters to -t|--tags (and deprecate -h).
+- Allow bare 'ht -t' for listing all tags.
+- Add default rel for multitag and multihost queries.
+
 * Thu Feb 19 2009 Gavin Carr <gavin@openfusion.com.au> 0.1
 - Initial package, version 0.1.
 
