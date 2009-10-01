@@ -1,5 +1,21 @@
-Hosttag: butt simple system of defining hosts and associating arbitrary tags 
-(groups, classes) with them. Usage:
+
+HostTag README
+==============
+
+HostTag is a very simple system for defining hosts and associating arbitrary 
+tags (groups, classes) with those hosts. 
+
+It uses the TokyoCabinet database to store the host => tag mappings on a 
+server, the TokyoTyrant network server to make those mappings available over 
+the network, and provides a 'hosttag' (or 'ht') client to query those
+mappings.
+
+Currently only the client is network capable; tags must be maintained on the
+server (in the /etc/hosttag directory).
+
+
+Client Usage
+------------
 
 Querying:
 
@@ -24,6 +40,7 @@ Querying:
 
 
 
+
 * ht -t <host> <host2>
 
   List the tags on these hosts
@@ -36,9 +53,13 @@ Querying:
 
 
 
-Setting:
 
 
+
+TODO - Management Utilities
+---------------------------
+
+e.g.
 
 * htset -h <host1> [-h <host2>] <tag1> [<tag2> <tag3>]
 
@@ -64,6 +85,9 @@ Setting:
 
 
 
+Implementation Notes
+--------------------
+
 Implementation - filesystem:
 
 + hosts
@@ -83,4 +107,24 @@ Implementation - web service:
 - GET http://hosttag/hosts/HOST
 
 - PUT http://hosttag/HOST/TAG
+
+
+
+
+
+Author
+------
+
+Gavin Carr <gavin@openfusion.com.au>
+
+Copyright 2008-2009 Gavin Carr
+
+
+
+
+Licence
+-------
+
+This software is free software, licensed under the GNU Public License v3
+or any later version.
 

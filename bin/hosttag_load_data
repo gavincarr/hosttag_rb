@@ -47,20 +47,22 @@ for my $tag (keys %host) {
   $db->put("tags/$tag", join(' ', sort @{ $host{$tag} }) . "\n")
     or die "DB $DB put failed: " . $db->errmsg( $db->ecode );
 }
-$db->put("hosts/ALL", join(' ', sort keys %tag));
+$db->put("tags/ALL", join(' ', sort keys %tag));
+$db->put("hosts/ALL", join(' ', sort keys %hosts));
 
 # Check for orphaned hosts/tags
 $db->iterinit;
 while (my $key = $db->iternext) {
   if ($key =~ m! ^hosts/(.*)$ !x) {
     my $host = $1;
-    next if exists $tag{$host};
     next if $host eq 'ALL';
+    next if exists $tag{$host};
     print "Deleting orphaned host '$host'\n";
     $db->out($key);
   }
   elsif ($key =~ m! ^tags/(.*)$ !x) {
     my $tag = $1;
+    next if $tag eq 'ALL';
     next if exists $host{$tag};
     print "Deleting orphaned tag '$tag'\n";
     $db->out($key);
