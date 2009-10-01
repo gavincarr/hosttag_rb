@@ -2,3 +2,5 @@
 + add a -A flag to display all hosts
 + handle 404s more gracefully
 
+- ht -l should list all tags
+

@@ -8,7 +8,7 @@ Querying:
   Show me all the hosts that have tag <foo> set
 
 
-* ht -a <tag1> <tag2>
+* ht [-a] <tag1> <tag2>
 
   Show me all the hosts that have <tag1> AND <tag2> set
 
@@ -18,9 +18,22 @@ Querying:
   Show me all the hosts that have <tag1> OR <tag2> set
 
 
-* ht -h <host> <host2>
+* ht -A 
 
-  Show me all the tags on these hosts
+  Show me *all* hosts
+
+
+
+* ht -t <host> <host2>
+
+  List the tags on these hosts
+
+* ht -t
+
+  List *all* tags
+
+
+
 
 
 Setting:
