@@ -28,6 +28,7 @@ except getopt.GetoptError, err:
     usage()
     sys.exit(2)
 
+arg_type = { 'host': 'tag', 'tag': 'host' }
 rel = None
 all = 0
 noop = 0
@@ -93,7 +94,7 @@ for arg in args:
         usock = urllib2.urlopen( url )
     except urllib2.HTTPError, err:
         if err.code == 404:
-            print >> sys.stderr, 'Error: ' + mode + ' ' + arg + ' not found.'
+            print >> sys.stderr, 'Error: ' + arg_type[mode] + " '" + arg + "' not found."
         else:
             print >> sys.stderr, err
         sys.exit(1)

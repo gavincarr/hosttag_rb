@@ -7,7 +7,7 @@ tags (groups, classes) with those hosts.
 
 It uses the TokyoCabinet database to store the host => tag mappings on a 
 server, the TokyoTyrant network server to make those mappings available over 
-the network, and provides a 'hosttag' (or 'ht') client to query those
+the network, and provides a simple 'hosttag' (or 'ht') client to query those
 mappings.
 
 Currently only the client is network capable; tags must be maintained on the
