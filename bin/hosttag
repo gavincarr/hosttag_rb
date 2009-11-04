@@ -33,7 +33,7 @@ rel = None
 all = 0
 noop = 0
 verbose = 0
-mode = 'host'
+mode = None
 for o, a in opts:
     if o in ('-?', '--help'):
         usage()
@@ -57,10 +57,12 @@ for o, a in opts:
 
 # Report all hosts with -A
 if all:
-    mode = 'host'
     args = [ 'ALL' ]
 elif mode == 'tag' and len(args) < 1:
     args = [ 'ALL' ]
+
+if not mode:
+    mode = 'host'
 
 if len(args) < 1:
     usage()
