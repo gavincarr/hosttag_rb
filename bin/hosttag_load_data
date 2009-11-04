@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Load data from /etc/hosttag into our 
+# Load data from /etc/hosttag into the tokyocabinet hosttag dbm 
 #
 
 use strict;
@@ -14,7 +14,10 @@ my $data_dir = '/etc/hosttag';
 die "Cannot find data dir '$data_dir'\n" unless -d $data_dir;
 die "Hosttag database '$DB' is not writeable\n" unless -w $DB;
 
+# Arrays of tags per host
 my %tag = ();
+# SKIP is a special tag used to mark hosts to be ignored in taglists
+my %skip_hosts = ();
 
 # Load all data
 for my $host_dir (glob("$data_dir/*")) {
@@ -25,14 +28,17 @@ for my $host_dir (glob("$data_dir/*")) {
   
   for my $tag_file (glob("$host_dir/*")) {
     $tag{ $host } ||= [];
-    push @{ $tag{ $host } }, basename( $tag_file );
+    my $tag = basename $tag_file;
+    push @{ $tag{ $host } }, $tag;
+    $skip_hosts{ $host } = 1 if $tag eq 'SKIP';
   }
 }
 
-# Invert %tag to get %host hash
+# Invert %tag to get %host hash (arrays of hosts per tag)
 my %host = ();
 for my $host (keys %tag) {
   for my $tag ( @{ $tag{$host} } ) {
+    next if $skip_hosts{ $host } && $tag ne 'SKIP';
     $host{ $tag } ||= [];
     push @{ $host{ $tag } }, $host;
   }
@@ -51,8 +57,10 @@ for my $tag (keys %host) {
   $db->put("tags/$tag", join(' ', sort @{ $host{$tag} }) . "\n")
     or die "DB $DB put failed: " . $db->errmsg( $db->ecode );
 }
-$db->put("tags/ALL", join(' ', sort keys %tag) . "\n") if keys %tag;
-$db->put("hosts/ALL", join(' ', sort keys %host) . "\n") if keys %host;
+$db->put("tags/ALL", join(' ', grep { ! $skip_hosts{$_} } sort keys %tag) . "\n") 
+  if keys %tag;
+$db->put("hosts/ALL", join(' ', sort keys %host) . "\n") 
+  if keys %host;
 
 # Check for orphaned hosts/tags
 $db->iterinit;
