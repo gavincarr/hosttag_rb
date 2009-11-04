@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.4
+Version: 0.5
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -36,14 +36,21 @@ install -m0755 bin/hosttag %{buildroot}%{_bindir}
 install -m0755 bin/hosttag_load_data %{buildroot}%{_bindir}
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
+mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
+install -m0755 etc/htserver/htserver.init %{buildroot}%{_sysconfdir}/rc.d/init.d/htserver
+install -m0755 etc/htserver/htserver.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/htserver
 
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
 
 %clean
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
+
+%post 
+/sbin/chkconfig --add htserver
 
 %files
 %defattr(-,root,root)
@@ -53,11 +60,19 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 %files server
 %defattr(-,root,root)
-%{_sysconfdir}/%{name}/Makefile
+%config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
 %{_bindir}/hosttag_load_data
+%{_sysconfdir}/rc.d/init.d/htserver
+%config(noreplace) %{_sysconfdir}/sysconfig/htserver
 
 %changelog
+* Wed Nov 04 2009 Gavin Carr <gavin@openfusion.com.au> 0.5
+- Fixes to hosttag_load_data.
+- Add SKIP tag support to hosttag_load_data.
+- Mode fixes to hosttag.
+- Add htserver init scripts to hosttag-server package.
+
 * Thu Oct 01 2009 Gavin Carr <gavin@openfusion.com.au> 0.4
 - Rename data to etc, and load_data to hosttag_load_data.
 - Add -server subpackage to hosttag.spec.
