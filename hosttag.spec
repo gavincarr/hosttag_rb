@@ -43,13 +43,15 @@ install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
 install -m0755 etc/htserver/htserver.init %{buildroot}%{_sysconfdir}/rc.d/init.d/htserver
 install -m0755 etc/htserver/htserver.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/htserver
 
+mkdir -p %{buildroot}/var/log/ttserver/htserver.ulog
+
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
 
 %clean
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
-%post 
+%post server
 /sbin/chkconfig --add htserver
 
 %files
@@ -65,6 +67,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{_bindir}/hosttag_load_data
 %{_sysconfdir}/rc.d/init.d/htserver
 %config(noreplace) %{_sysconfdir}/sysconfig/htserver
+/var/log/ttserver/htserver.ulog
 
 %changelog
 * Wed Nov 04 2009 Gavin Carr <gavin@openfusion.com.au> 0.5

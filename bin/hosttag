@@ -86,7 +86,7 @@ for arg in args:
         namespace = 'hosts'
     else:
         namespace = 'tags'
-    url = 'http://hosttag:1978/%s/%s' % ( namespace, arg )
+    url = 'http://hosttag:1980/%s/%s' % ( namespace, arg )
     if verbose:
         print >> sys.stderr, '+ url: ' + url
 
