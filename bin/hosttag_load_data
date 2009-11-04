@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+#
+# Load data from /etc/hosttag into our 
+#
 
 use strict;
 
@@ -6,9 +9,10 @@ use File::Basename;
 use TokyoCabinet;
 
 my $DB = '/var/lib/misc/hosttag.tch';
+my $data_dir = '/etc/hosttag';
 
-my $data_dir = dirname($0);
-die "Cannot find data dir '$data_dir'" unless -d $data_dir;
+die "Cannot find data dir '$data_dir'\n" unless -d $data_dir;
+die "Hosttag database '$DB' is not writeable\n" unless -w $DB;
 
 my %tag = ();
 
@@ -47,8 +51,8 @@ for my $tag (keys %host) {
   $db->put("tags/$tag", join(' ', sort @{ $host{$tag} }) . "\n")
     or die "DB $DB put failed: " . $db->errmsg( $db->ecode );
 }
-$db->put("tags/ALL", join(' ', sort keys %tag));
-$db->put("hosts/ALL", join(' ', sort keys %hosts));
+$db->put("tags/ALL", join(' ', sort keys %tag) . "\n") if keys %tag;
+$db->put("hosts/ALL", join(' ', sort keys %host) . "\n") if keys %host;
 
 # Check for orphaned hosts/tags
 $db->iterinit;
