@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+use strict;
+
+use TokyoCabinet;
+
+my $DB = '/var/lib/misc/hosttag.tch';
+
+my $db = TokyoCabinet::HDB->new;
+$db->open( $DB, $db->OWRITER | $db->OCREAT )
+  or die "DB $DB open failed: " . $db->errmsg( $db->ecode );
+
+$db->iterinit;
+while (my $key = $db->iternext) {
+  printf "%s: %s", $key, $db->get($key);
+}
+
