@@ -7,11 +7,14 @@ use TokyoCabinet;
 my $DB = '/var/lib/misc/hosttag.tch';
 
 my $db = TokyoCabinet::HDB->new;
-$db->open( $DB, $db->OWRITER | $db->OCREAT )
+$db->open( $DB, $db->OREADER | $db->ONOLCK)
   or die "DB $DB open failed: " . $db->errmsg( $db->ecode );
 
 $db->iterinit;
 while (my $key = $db->iternext) {
   printf "%s: %s", $key, $db->get($key);
 }
+
+$db->close
+  or die "DB $DB close failed: " . $db->errmsg( $db->ecode );
 
