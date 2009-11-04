@@ -1,0 +1,146 @@
+#! /bin/sh
+#
+#----------------------------------------------------------------
+# Startup script for the hosttag Tokyo Tyrant server
+#----------------------------------------------------------------
+#
+# chkconfig: - 85 15
+# description: Tokyo Tyrant is the network server for the 
+#   Tokyo Cabinet DBM system
+# processname: htserver
+# config: /etc/sysconfig/htserver
+# pidfile: /var/run/htserver.pid
+
+. /etc/rc.d/init.d/functions
+
+# configuration variable defaults
+prog="ttserver"
+CMD="ttserver"
+BASEDIR="/var/lib/ttserver"
+PORT="1980"
+PIDFILE="/var/run/htserver.pid"
+LOGFILE="/var/log/ttserver/htserver.log"
+ULOGDIR="/var/log/ttserver/htserver.ulog"
+ULIMSIZ="256m"
+SID=1
+DBNAME="/var/lib/misc/hosttag.tch"
+MAXCON="65536"
+
+retval=0
+
+test -f /etc/sysconfig/htserver && . /etc/sysconfig/htserver
+
+# locale clear
+LANG=C
+LC_ALL=C
+export LANG LC_ALL
+
+
+# start the server
+start(){
+  printf 'Starting the hosttag Tokyo Tyrant server\n'
+  ulimit -n "$MAXCON"
+  mkdir -p "$BASEDIR"
+  if [ -f "$PIDFILE" ] ; then
+    pid=`cat "$PIDFILE"`
+    printf 'Existing process: %d\n' "$pid"
+    retval=1
+  else
+    $CMD \
+      -port "$PORT" \
+      -dmn \
+      -pid "$PIDFILE" \
+      -log "$LOGFILE" \
+      -ulog "$ULOGDIR" \
+      -ulim "$ULIMSIZ" \
+      -sid "$SID" \
+      "$DBNAME"
+    if [ "$?" -eq 0 ] ; then
+      printf 'Done\n'
+    else
+      printf 'The server could not started\n'
+      retval=1
+    fi
+  fi
+}
+
+
+# stop the server
+stop(){
+  printf 'Stopping the hosttag Tokyo Tyrant server\n'
+  if [ -f "$PIDFILE" ] ; then
+    pid=`cat "$PIDFILE"`
+    kill -TERM "$pid"
+    c=0
+    while true ; do
+      sleep 0.1
+      if [ -f "$PIDFILE" ] ; then
+        c=`expr $c + 1`
+        if [ "$c" -ge 100 ] ; then
+          printf 'Hanging process: %d\n' "$pid"
+          retval=1
+          break
+        fi
+      else
+        printf 'Done\n'
+        break
+      fi
+    done
+  else
+    printf 'No process found\n'
+    retval=1
+  fi
+}
+
+
+# send HUP to the server for log rotation
+hup(){
+  printf 'Sending HUP signal to the hosttag Tokyo Tyrant server\n'
+  if [ -f "$PIDFILE" ] ; then
+    pid=`cat "$PIDFILE"`
+    kill -HUP "$pid"
+    printf 'Done\n'
+  else
+    printf 'No process found\n'
+    retval=1
+  fi
+}
+
+
+# check permission
+if [ -d "$BASEDIR" ] && ! touch "$BASEDIR/$$" >/dev/null 2>&1
+then
+  printf 'Permission denied\n'
+  exit 1
+fi
+rm -f "$BASEDIR/$$"
+
+
+# dispatch the command
+case "$1" in
+start)
+  start
+  ;;
+stop)
+  stop
+  ;;
+restart)
+  stop
+  start
+  ;;
+hup)
+  hup
+  ;;
+*)
+  printf 'Usage: service %s {start|stop|restart|hup}\n' "$prog"
+  exit 1
+  ;;
+esac
+
+
+# exit
+exit "$retval"
+
+
+
+# END OF FILE
