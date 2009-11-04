@@ -57,8 +57,10 @@ for my $tag (keys %host) {
   $db->put("tags/$tag", join(' ', sort @{ $host{$tag} }) . "\n")
     or die "DB $DB put failed: " . $db->errmsg( $db->ecode );
 }
-$db->put("tags/ALL", join(' ', grep { ! $skip_hosts{$_} } sort keys %tag) . "\n") 
-  if keys %tag;
+if (keys %tag) {
+  $db->put("tags/ALL", join(' ', grep { ! $skip_hosts{$_} } sort keys %tag) . "\n");
+  $db->put("tags/ALL_SKIP", join(' ', sort keys %tag) . "\n");
+}
 $db->put("hosts/ALL", join(' ', sort keys %host) . "\n") 
   if keys %host;
 
@@ -75,6 +77,7 @@ while (my $key = $db->iternext) {
   elsif ($key =~ m! ^tags/(.*)$ !x) {
     my $tag = $1;
     next if $tag eq 'ALL';
+    next if $tag eq 'ALL_SKIP';
     next if exists $host{$tag};
     print "Deleting orphaned tag '$tag'\n";
     $db->out($key);
