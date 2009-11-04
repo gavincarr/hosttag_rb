@@ -39,7 +39,7 @@ for o, a in opts:
         usage()
         sys.exit(0)
     elif o in ('-A', '--all'):
-        all = 1
+        all += 1
     elif o in ('-a', '--and'):
         rel = 'and'
     elif o in ('-o', '--or'):
@@ -63,6 +63,8 @@ elif mode == 'tag' and len(args) < 1:
 
 if not mode:
     mode = 'host'
+if mode == 'host' and all > 1:
+    args = [ 'ALL_SKIP' ]
 
 if len(args) < 1:
     usage()
