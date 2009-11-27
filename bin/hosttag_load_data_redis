@@ -1,0 +1,98 @@
+#!/usr/bin/ruby
+#
+# Load data from /etc/hosttag into redis
+#
+
+require 'rubygems'
+require 'redis'
+require 'ftools'
+require 'pp'
+
+DATA_DIR = '/etc/hosttag'
+
+# perl-style hash mapping http://snippets.dzone.com/posts/show/302
+class Array
+  def to_h(&block)
+    Hash[*self.collect {|v| [v, block.call(v)] }.flatten] 
+  end
+end
+
+def load_tags
+  tag_hash = {}
+
+  Dir.chdir(DATA_DIR)
+  Dir.glob("*").each do |host|
+    next if not File.directory?(host)
+
+    tag_hash[host] = []
+    Dir.glob("#{host}/*").each do |tag_path|
+      tag_hash[host].push(File.basename(tag_path))
+    end
+  end
+
+  tag_hash
+end
+
+def deep_invert(hash)
+  inverted = {}
+  hash.each do |k, v|
+    if v.is_a? Array
+      v.each do |i|
+        inverted[i] ||= []
+        inverted[i].push(k)
+      end
+    else
+      inverted[v] ||= []
+      inverted[v].push(k)
+    end
+  end
+  inverted
+end
+
+def redis_delete_hosttag_keys(r)
+  r.keys('hosttag/*').each { |k| r.delete(k) }
+end
+
+def write_hash_to_redis(r, type, tag_hash)
+  tag_hash.each do |key, val_array|
+    redis_key = "hosttag/#{type}/#{key}"
+    val_array.each { |val| r.set_add(redis_key, val) }
+  end
+end
+
+# Main
+r = Redis.new()
+
+# Could be cleverer about this, but for now just delete all hosttag keys
+redis_delete_hosttag_keys(r)
+
+# Load from disk
+host_tag_hash = load_tags()
+tag_host_hash = deep_invert(host_tag_hash)
+
+# Load into redis
+write_hash_to_redis(r, 'host', host_tag_hash)
+write_hash_to_redis(r, 'tag', tag_host_hash)
+
+# Add ALL entries
+if not host_tag_hash.empty?
+  skip_hosts_hash = tag_host_hash['SKIP'].to_h { 1 }
+  host_tag_hash.each_key do |k| 
+    r.set_add("hosttag/all_hosts", k)
+    next if skip_hosts_hash[k]
+    r.set_add("hosttag/all_hosts_noskip", k)
+  end
+end
+if not tag_host_hash.empty?
+  tag_host_hash.each_key do |k| 
+    r.set_add("hosttag/all_tags", k)
+    next if k == 'SKIP'
+    r.set_add("hosttag/all_tags_noskip", k)
+  end
+end
+
+# Dump
+r.keys("hosttag/*").sort.each do |k|
+  puts "#{k}: #{r.set_members(k).sort.join(',')}"
+end
+
