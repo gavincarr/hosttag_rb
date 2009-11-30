@@ -1,0 +1,12 @@
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'redis'
+
+r = Redis.new()
+
+# Dump
+r.keys("hosttag/*").sort.each do |k|
+  puts "#{k}: #{r.set_members(k).sort.join(' ')}"
+end
+
