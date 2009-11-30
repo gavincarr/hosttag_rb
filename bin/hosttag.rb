@@ -53,6 +53,13 @@ def usage(opts)
   exit
 end
 
-args = opts.parse(ARGV)
-usage(opts) if args.length == 0
+begin
+  args = opts.parse(ARGV) 
+rescue => e
+  puts "Error: " << e
+  usage(opts)
+end
+if args.length == 0
+  usage(opts) 
+end
 
