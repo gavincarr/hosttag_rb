@@ -10,15 +10,9 @@ require 'pp'
 
 DATA_DIR = '/etc/hosttag'
 
-# perl-style hash mapping http://snippets.dzone.com/posts/show/302
-class Array
-  def to_h(&block)
-    Hash[*self.collect {|v| [v, block.call(v)] }.flatten] 
-  end
-end
-
 def load_tags
   tag_hash = {}
+  skip_hosts_hash = {}
 
   Dir.chdir(DATA_DIR)
   Dir.glob("*").each do |host|
@@ -26,11 +20,13 @@ def load_tags
 
     tag_hash[host] = []
     Dir.glob("#{host}/*").each do |tag_path|
-      tag_hash[host].push(File.basename(tag_path))
+      tag = File.basename(tag_path)
+      tag_hash[host].push(tag)
+      skip_hosts_hash[host] = 1 if tag == 'SKIP'
     end
   end
 
-  tag_hash
+  return tag_hash, skip_hosts_hash
 end
 
 def deep_invert(hash)
@@ -67,9 +63,19 @@ r = Redis.new()
 # Could be cleverer about this, but for now just delete all hosttag keys
 redis_delete_hosttag_keys(r)
 
-# Load from disk
-host_tag_hash = load_tags()
-tag_host_hash = deep_invert(host_tag_hash)
+# Load host => tag mappings from disk
+host_tag_hash, skip_hosts_hash = load_tags()
+#tag_host_hash = deep_invert(host_tag_hash)
+
+# Invert host_tag_hash (and omit skipped hosts) to get tag => host mappings
+tag_host_hash = {}
+host_tag_hash.each do |h, v|
+  v.each do |t|
+    next if skip_hosts_hash[h] && t != 'SKIP'
+    tag_host_hash[t] ||= []
+    tag_host_hash[t].push(h)
+  end
+end
 
 # Load into redis
 write_hash_to_redis(r, 'host', host_tag_hash)
@@ -77,7 +83,6 @@ write_hash_to_redis(r, 'tag', tag_host_hash)
 
 # Add ALL entries
 if not host_tag_hash.empty?
-  skip_hosts_hash = tag_host_hash['SKIP'].to_h { 1 }
   host_tag_hash.each_key do |k| 
     r.set_add("hosttag/all_hosts", k)
     next if skip_hosts_hash[k]
