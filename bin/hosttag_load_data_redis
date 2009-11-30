@@ -60,6 +60,7 @@ def write_hash_to_redis(r, type, tag_hash)
   end
 end
 
+# ----------------------------------------------------------------------------
 # Main
 r = Redis.new()
 
