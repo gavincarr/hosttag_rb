@@ -22,6 +22,7 @@ require 'redis'
 require 'optparse'
 
 options = { :arg_type => 'tag', :all => 0, :all_key => 'all_hosts' }
+arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
 opts = OptionParser.new
 opts.banner = "Usage: hosttag.rb [options] <tag> [<tag2>...]"
@@ -67,26 +68,58 @@ end
 # Create redis object
 r = Redis.new()
 
-# Standard request
-if options[:all] == 0
+def die(error)
+  puts error
+  exit 1
+end
+
+def lookup_keys(r, args, arg_type, rel, verbose)
   # Default a rel if we have multiple args
-  if args.length > 1
-    options[:rel] ||= options[:arg_type] == 'tag' ? 'and' : 'or'
-    puts "+ rel: #{options[:rel]}" if options[:verbose]
+  if args.length > 1 and not rel
+    rel = arg_type == 'tag' ? 'and' : 'or'
   end
+  puts "+ rel (#{arg_type}): #{rel}" if verbose
 
   # Map keys to fetch
-  keys = args.collect {|v| "hosttag/#{options[:arg_type]}/#{v}" }
-  puts "+ keys: #{keys.join(' ')}" if options[:verbose]
+  keys = args.collect {|v| "hosttag/#{arg_type}/#{v}" }
+  puts "+ keys: #{keys.join(' ')}" if verbose
 
-  # Fetch and report
-  if args.length == 1
-    puts r.set_members( keys ).sort.join(' ')
-  elsif options[:rel] == 'and'
-    puts r.set_intersect( keys ).sort.join(' ')
-  else
-    puts r.set_union( keys ).sort.join(' ')
+  # Check all keys exist
+  keys.each do |k| 
+    if not r.key?(k) 
+      item = k.sub(%r{^.*/}, '')
+      raise "Error: #{arg_type} '#{item}' not found." 
+    end
   end
+  
+  # Lookup and return
+  if keys.length == 1
+    r.set_members( keys ).sort.join(' ')
+  elsif rel == 'and'
+    r.set_intersect( keys ).sort.join(' ')
+  else
+    r.set_union( keys ).sort.join(' ')
+  end
+end
+
+# Standard request
+if options[:all] == 0
+  begin
+    result = lookup_keys(r, args, options[:arg_type], options[:rel], options[:verbose]);
+  rescue
+    die $! unless options[:arg_type] == 'tag'
+    # If default lookups failed as a tag, try again as a host
+    error1 = $!
+    begin
+      result = lookup_keys(r, args, arg_type_invert[options[:arg_type]], options[:rel], options[:verbose])
+    rescue
+      # Failed a second time - rethrow original error
+      die error1
+    end
+  end
+
+  # Report
+  puts result.sort.join(' ')
 
 # All request
 else
