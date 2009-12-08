@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.5
+Version: 0.6.1
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -9,6 +9,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: %{_tmppath}/%{name}-%{version}
 BuildArch: noarch
+Requires: rubygems, rubygem-redis
 
 %description
 Hosttag is a client/server system for tagging hosts into groups or classes.
@@ -17,7 +18,7 @@ This package contains the hosttag client.
 %package server
 Summary: Hosttag server
 Group: Applications/System
-Requires: tokyocabinet, tokyotyrant
+Requires: redis, rubygems, rubygem-redis
 
 %description server
 Hosttag is a client/server system for tagging hosts into groups or classes.
@@ -32,27 +33,18 @@ This package contains the hosttag server.
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 mkdir -p %{buildroot}%{_bindir}
-install -m0755 bin/hosttag %{buildroot}%{_bindir}
-install -m0755 bin/hosttag_load_data %{buildroot}%{_bindir}
+install -m0755 bin/hosttag.rb %{buildroot}%{_bindir}/hosttag
+install -m0755 bin/hosttag_load_data_redis %{buildroot}%{_bindir}/hosttag_load_data
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
-mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
-mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
-install -m0755 etc/htserver/htserver.init %{buildroot}%{_sysconfdir}/rc.d/init.d/htserver
-install -m0755 etc/htserver/htserver.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/htserver
-
-mkdir -p %{buildroot}/var/log/ttserver/htserver.ulog
 
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
 
 %clean
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
-
-%post server
-/sbin/chkconfig --add htserver
 
 %files
 %defattr(-,root,root)
@@ -65,11 +57,12 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
 %{_bindir}/hosttag_load_data
-%{_sysconfdir}/rc.d/init.d/htserver
-%config(noreplace) %{_sysconfdir}/sysconfig/htserver
-/var/log/ttserver/htserver.ulog
 
 %changelog
+* Tue Dec 08 2009 Gavin Carr <gavin@openfusion.com.au> 0.6
+- Move from tokyo cabinet/tyrant server to redis-based one.
+- Rewrite client in ruby.
+
 * Wed Nov 04 2009 Gavin Carr <gavin@openfusion.com.au> 0.5
 - Fixes to hosttag_load_data.
 - Add SKIP tag support to hosttag_load_data.

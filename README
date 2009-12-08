@@ -5,9 +5,8 @@ HostTag README
 HostTag is a very simple system for defining hosts and associating arbitrary 
 tags (groups, classes) with those hosts. 
 
-It uses the TokyoCabinet database to store the host => tag mappings on a 
-server, the TokyoTyrant network server to make those mappings available over 
-the network, and provides a simple 'hosttag' (or 'ht') client to query those
+It uses the redis key-value store to store and make available the host => tag 
+mappings, and provides a simple 'hosttag' (or 'ht') client to query those
 mappings.
 
 Currently only the client is network capable; tags must be maintained on the
@@ -21,33 +20,33 @@ Querying:
 
 * ht <foo>
 
-  Show me all the hosts that have tag <foo> set
+  Show all the hosts that have tag <foo> set
 
 
 * ht [-a] <tag1> <tag2>
 
-  Show me all the hosts that have <tag1> AND <tag2> set
+  Show all the hosts that have <tag1> AND <tag2> set
 
 
 * ht -o <tag1> <tag2>
 
-  Show me all the hosts that have <tag1> OR <tag2> set
+  Show all the hosts that have <tag1> OR <tag2> set
 
 
 * ht -A 
 
-  Show me *all* hosts
+  Show *all* hosts
 
 
 
 
 * ht -t <host> <host2>
 
-  List the tags on these hosts
+  Show the tags on these hosts
 
-* ht -t
+* ht -T
 
-  List *all* tags
+  Show *all* tags
 
 
 

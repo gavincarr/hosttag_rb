@@ -98,7 +98,7 @@ if not tag_host_hash.empty?
 end
 
 # Dump
-r.keys("hosttag/*").sort.each do |k|
-  puts "#{k}: #{r.set_members(k).sort.join(',')}"
-end
+#r.keys("hosttag/*").sort.each do |k|
+#  puts "#{k}: #{r.set_members(k).sort.join(',')}"
+#end
 
