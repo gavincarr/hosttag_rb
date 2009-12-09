@@ -1,0 +1,140 @@
+#!/usr/bin/ruby
+#
+# Hosttag update client, redis version
+#
+# Usage:
+#   htset <host1> [<host2> ...] <tag> [<tag2> ...]
+#
+
+require 'rubygems'
+require 'redis'
+require 'optparse'
+require 'pp'
+
+# ------------------------------------------------------------------------------
+# Subroutines
+
+def die(error)
+  puts error
+  exit 1
+end
+
+def parse_options(options)
+  opts = OptionParser.new
+  opts.banner = "Usage: htset [options] <host> [<host2> ...] <tag> [<tag2>...]"
+  opts.on('-?', '-h', '--help') do
+    puts opts
+    exit
+  end
+  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
+    options[:server] = val
+  end
+  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
+    options[:port] = val
+  end
+  opts.on('-v', '--verbose', 'Verbose output') do
+    options[:verbose] = true
+  end
+
+  # Parse options
+  begin
+    args = opts.parse(ARGV) 
+  rescue => e
+    die("Error: " + opts) 
+  end
+
+  if args.length < 2
+    die("Error: " + opts) 
+  end
+
+  return options, args
+end
+
+# Classify args into hosts, tags, and uncertain buckets
+def classify_args(r, args, verbose)
+  results = { :host => [], :tag => [], :uncertain => [] }
+  arg_type = 'host'
+
+  # First arg must be host, and last tag, by definition
+  results[:host].push(args.shift)
+  last_tag = args.pop
+
+  # Classify remainder by checking for existence in redis
+  while a = args.shift
+    if r.key?("hosttag/#{arg_type}/#{a}")
+      if arg_type == 'host'
+        # if 'a' is a valid host, then everything before 'a' must be too
+        if results[:uncertain].length > 0
+          results[:uncertain].each { |u| results[:host].push(u) }
+          results[:uncertain] = []
+        end
+        results[:host].push(a)
+      else
+        results[:tag].push(a)
+        # If 'a' is a valid tag, then everything after 'a' must be too
+        args.each { |a| results[:tag].push(a) }
+        break
+      end
+
+    elsif arg_type == 'host'
+      # Not a host, see if it's a tag
+      arg_type = 'tag'
+      redo
+
+    elsif arg_type == 'tag'
+      # Not a host or a tag, add to uncertain list
+      arg_type = 'host'
+      results[:uncertain].push(a)
+    end
+  end
+
+  results[:tag].push(last_tag)
+
+  return results
+end
+
+def add_hosttags(r, hosts, tags, verbose)
+  # Add tags to each host
+  hosts.each do |host|
+    key = "hosttag/host/#{host}" 
+    skip_host = false
+    tags.each do |tag| 
+      r.set_add(key, tag) 
+      skip_host = true if tag == 'SKIP'
+    end
+    # Add to all_hosts sets
+    r.set_add("hosttag/all_hosts", host)
+    r.set_add("hosttag/all_hosts_noskip", host) unless skip_host
+  end
+
+  # Add hosts to each tag
+  tags.each do |tag|
+    key = "hosttag/tag/#{tag}" 
+    hosts.each { |host| r.set_add(key, host) }
+    # Add to all_tags sets
+    r.set_add("hosttag/all_tags", tag)
+    r.set_add("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+  end
+end
+
+# ------------------------------------------------------------------------------
+# Main
+
+defaults = { :server => 'hosttag', :port => 6379 }
+options, args = parse_options( defaults )
+
+r = Redis.new( :host => options[:server], :port => options[:port] )
+
+results = classify_args(r, args, options[:verbose])
+if options[:verbose] 
+  print "+ results: "
+  pp results 
+end
+
+if results[:uncertain].length > 0
+  # TODO: do something useful here - ask the user?
+  die("Error: can't auto-classify '#{results[:uncertain].join(',')}' - aborting")
+end
+
+add_hosttags(r, results[:host], results[:tag], options[:verbose]);
+
