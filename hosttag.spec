@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.1
+Version: 0.6.2
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -33,7 +33,7 @@ This package contains the hosttag server.
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 mkdir -p %{buildroot}%{_bindir}
-install -m0755 bin/hosttag.rb %{buildroot}%{_bindir}/hosttag
+install -m0755 bin/hosttag %{buildroot}%{_bindir}/hosttag
 install -m0755 bin/hosttag_load_data_redis %{buildroot}%{_bindir}/hosttag_load_data
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
