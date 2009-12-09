@@ -97,6 +97,9 @@ if not tag_host_hash.empty?
   end
 end
 
+# Force a flush to disk
+r.save;
+
 # Dump
 #r.keys("hosttag/*").sort.each do |k|
 #  puts "#{k}: #{r.set_members(k).sort.join(',')}"
