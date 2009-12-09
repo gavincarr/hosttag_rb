@@ -21,7 +21,10 @@ require 'rubygems'
 require 'redis'
 require 'optparse'
 
-options = { :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', :server => 'hosttag' }
+options = { 
+  :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', 
+  :server => 'hosttag', :port => 6379,
+}
 arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
 opts = OptionParser.new
@@ -46,10 +49,13 @@ opts.on('-T', '--all-tags', 'Report all tags') do
   options[:all] += 1
   options[:all_key] = 'all_tags'
 end
-opts.on('-s=ARG', '--server=ARG', String, 'Specify server to query') do |val|
+opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
   options[:server] = val
 end
-opts.on('-v', '--verbose', 'Give verbose diagnostics') do
+opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
+  options[:port] = val
+end
+opts.on('-v', '--verbose', 'Verbose output') do
   options[:verbose] = true
 end
 def usage(opts)
@@ -69,7 +75,7 @@ if args.length == 0 and options[:all] == 0
 end
 
 # Create redis object
-r = Redis.new( :host => options[:server] )
+r = Redis.new( :host => options[:server], :port => options[:port] )
 
 def die(error)
   puts error
