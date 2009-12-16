@@ -26,6 +26,9 @@ def parse_options(options)
     puts opts
     exit
   end
+  opts.on('-h', '--help', '-?', 'Show this usage information') do
+    die(opts)
+  end
   opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
     options[:server] = val
   end

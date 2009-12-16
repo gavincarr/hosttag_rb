@@ -9,8 +9,8 @@ It uses the redis key-value store to store and make available the host => tag
 mappings, and provides a simple 'hosttag' (or 'ht') client to query those
 mappings.
 
-Currently only the client is network capable; tags must be maintained on the
-server (in the /etc/hosttag directory).
+Initially only the client was network capable; tags had to be maintained on 
+the server (in the /etc/hosttag directory).
 
 
 Client Usage
@@ -25,12 +25,12 @@ Querying:
 
 * ht [-a] <tag1> <tag2>
 
-  Show all the hosts that have <tag1> AND <tag2> set
+  Show all the hosts that have <tag1> AND <tag2> set (intersection)
 
 
 * ht -o <tag1> <tag2>
 
-  Show all the hosts that have <tag1> OR <tag2> set
+  Show all the hosts that have <tag1> OR <tag2> set (union)
 
 
 * ht -A 
@@ -40,9 +40,17 @@ Querying:
 
 
 
-* ht -t <host> <host2>
+* ht -t <host> 
 
-  Show the tags on these hosts
+  Show the tags on host <host>
+
+* ht -a <host1> <host2>
+
+  Show the tags that occur on both host1 and host2 (intersection)
+
+* ht -o <host1> <host2>
+
+  Show the tags that occur on either host1 and host2 (union)
 
 * ht -T
 
@@ -80,32 +88,6 @@ e.g.
 
   Remove this tag from these hosts
   
-
-
-
-
-Implementation Notes
---------------------
-
-Implementation - filesystem:
-
-+ hosts
-  o carbon
-  o dubnium
-
-+ tags
-  o krw
-  o krw4
-  o centos5
-
-
-Implementation - web service:
-
-- GET http://hosttag/tags/TAG
-
-- GET http://hosttag/hosts/HOST
-
-- PUT http://hosttag/HOST/TAG
 
 
 

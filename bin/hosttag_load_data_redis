@@ -5,9 +5,55 @@
 
 require 'rubygems'
 require 'redis'
+require 'optparse'
 require 'ftools'
 
 DATA_DIR = '/etc/hosttag'
+
+# ------------------------------------------------------------------------------
+# Subroutines
+
+def die(error)
+  puts error
+  exit 1
+end
+
+def parse_options(options)
+  opts = OptionParser.new
+  opts.banner = "Usage: hosttag_load_data_redis [options]"
+  opts.on('-?', '-h', '--help') do
+    puts opts
+    exit
+  end
+  opts.on('-h', '--help', '-?', 'Show this usage information') do
+    die(opts)
+  end
+  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
+    options[:server] = val
+  end
+  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
+    options[:port] = val
+  end
+  opts.on('-v', '--verbose', 'Verbose output') do
+    options[:verbose] = true
+  end
+  opts.on('--import', 'Import mode - delete all content in redis before loading') do
+    options[:import] = true
+  end
+
+  # Parse options
+  begin
+    args = opts.parse(ARGV) 
+  rescue => e
+    die("Error: " + opts) 
+  end
+
+  if args.length > 0
+    die("Error: " + opts) 
+  end
+
+  return options, args
+end
 
 def load_tags
   tag_hash = {}
@@ -57,10 +103,16 @@ end
 
 # ----------------------------------------------------------------------------
 # Main
-r = Redis.new()
+
+defaults = { :server => 'hosttag', :port => 6379 }
+options, args = parse_options( defaults )
+
+r = Redis.new( :host => options[:server], :port => options[:port] )
 
 # Could be cleverer about this, but for now just delete all hosttag keys
-redis_delete_hosttag_keys(r)
+if options[:import]
+  redis_delete_hosttag_keys(r)
+end
 
 # Load host => tag mappings from disk
 host_tag_hash, skip_hosts_hash = load_tags()
@@ -98,9 +150,4 @@ end
 
 # Force a flush to disk
 r.save;
-
-# Dump
-#r.keys("hosttag/*").sort.each do |k|
-#  puts "#{k}: #{r.set_members(k).sort.join(',')}"
-#end
 
