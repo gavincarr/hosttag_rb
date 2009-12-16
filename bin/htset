@@ -43,11 +43,11 @@ def parse_options(options)
   begin
     args = opts.parse(ARGV) 
   rescue => e
-    die("Error: " + opts) 
+    die(opts) 
   end
 
   if args.length < 2
-    die("Error: " + opts) 
+    die(opts) 
   end
 
   return options, args
