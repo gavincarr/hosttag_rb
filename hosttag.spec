@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.3
+Version: 0.6.4
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
