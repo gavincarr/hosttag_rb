@@ -9,6 +9,7 @@
 require 'rubygems'
 require 'redis'
 require 'optparse'
+require 'ftools'
 require 'pp'
 
 # ------------------------------------------------------------------------------
@@ -19,9 +20,9 @@ def die(error)
   exit 1
 end
 
-def parse_options(options)
+def parse_options(options, me)
   opts = OptionParser.new
-  opts.banner = "Usage: htset [options] <host> [<host2> ...] <tag> [<tag2>...]"
+  opts.banner = "Usage: #{me} [options] <host> [<host2> ...] <tag> [<tag2>...]"
   opts.on('-?', '-h', '--help') do
     puts opts
     exit
@@ -96,35 +97,57 @@ def classify_args(r, args, verbose)
   return results
 end
 
-def add_hosttags(r, hosts, tags, verbose)
+def adjust_hosttags(r, hosts, tags, mode, verbose)
   # Add tags to each host
   hosts.each do |host|
     key = "hosttag/host/#{host}" 
     skip_host = false
     tags.each do |tag| 
-      r.set_add(key, tag) 
+      if (mode == 'htdel')
+        r.set_delete(key, tag) 
+      else
+        r.set_add(key, tag) 
+      end
       skip_host = true if tag == 'SKIP'
     end
-    # Add to all_hosts sets
-    r.set_add("hosttag/all_hosts", host)
-    r.set_add("hosttag/all_hosts_noskip", host) unless skip_host
+    # Add/delete to/from all_hosts sets
+    if (mode == 'htdel')
+      r.set_delete("hosttag/all_hosts", host)
+      r.set_delete("hosttag/all_hosts_noskip", host) unless skip_host
+    else
+      r.set_add("hosttag/all_hosts", host)
+      r.set_add("hosttag/all_hosts_noskip", host) unless skip_host
+    end
   end
 
-  # Add hosts to each tag
+  # Add/delete hosts to/from each tag
   tags.each do |tag|
     key = "hosttag/tag/#{tag}" 
-    hosts.each { |host| r.set_add(key, host) }
+    hosts.each do |host| 
+      if (mode == 'htdel')
+        r.set_delete(key, host) 
+      else
+        r.set_add(key, host) 
+      end
+    end
     # Add to all_tags sets
-    r.set_add("hosttag/all_tags", tag)
-    r.set_add("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+    if (mode == 'htdel')
+      r.set_delete("hosttag/all_tags", tag)
+      r.set_delete("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+    else
+      r.set_add("hosttag/all_tags", tag)
+      r.set_add("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+    end
   end
 end
 
 # ------------------------------------------------------------------------------
 # Main
 
+mode = $0.sub(/^.*\//, '')
+
 defaults = { :server => 'hosttag', :port => 6379 }
-options, args = parse_options( defaults )
+options, args = parse_options( defaults, mode )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
 
@@ -139,5 +162,5 @@ if results[:uncertain].length > 0
   die("Error: can't auto-classify '#{results[:uncertain].join(',')}' - aborting")
 end
 
-add_hosttags(r, results[:host], results[:tag], options[:verbose]);
+adjust_hosttags(r, results[:host], results[:tag], mode, options[:verbose]);
 
