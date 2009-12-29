@@ -109,7 +109,7 @@ options, args = parse_options( defaults )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
 
-# Could be cleverer about this, but for now just delete all hosttag keys
+# If in 'import' mode, delete all hosttag keys
 if options[:import]
   redis_delete_hosttag_keys(r)
 end
