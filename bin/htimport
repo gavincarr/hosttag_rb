@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 #
-# Load data from /etc/hosttag into redis
+# Import host tags from /etc/hosttag into redis
 #
 
 require 'rubygems'
@@ -20,7 +20,7 @@ end
 
 def parse_options(options)
   opts = OptionParser.new
-  opts.banner = "Usage: hosttag_load_data_redis [options]"
+  opts.banner = "Usage: htimport [options]"
   opts.on('-?', '-h', '--help') do
     puts opts
     exit
@@ -34,11 +34,11 @@ def parse_options(options)
   opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
     options[:port] = val
   end
+  opts.on('--delete', 'Delete mode - remove all hosttags from redis before importing') do
+    options[:delete] = true
+  end
   opts.on('-v', '--verbose', 'Verbose output') do
     options[:verbose] = true
-  end
-  opts.on('--import', 'Import mode - delete all content in redis before loading') do
-    options[:import] = true
   end
 
   # Parse options
@@ -97,7 +97,11 @@ end
 def write_hash_to_redis(r, type, tag_hash)
   tag_hash.each do |key, val_array|
     redis_key = "hosttag/#{type}/#{key}"
-    val_array.each { |val| r.set_add(redis_key, val) }
+    val_array.each do |val| 
+      next if r.set_member?(redis_key, val)
+      puts "+ #{type}/#{key}/#{val}"
+      r.set_add(redis_key, val) 
+    end
   end
 end
 
@@ -109,8 +113,8 @@ options, args = parse_options( defaults )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
 
-# If in 'import' mode, delete all hosttag keys
-if options[:import]
+# If in 'delete' mode, delete all hosttag keys
+if options[:delete]
   redis_delete_hosttag_keys(r)
 end
 

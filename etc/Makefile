@@ -1,9 +1,10 @@
-all:
-	sudo /usr/bin/hosttag_load_data
-
+all: import export
+	
 import:
-	sudo /usr/sbin/hosttag_load_data --import
+	# redis has essentially open write permissions, so htimport is limited to root
+	sudo /usr/sbin/htimport
 
 export:
-	sudo /usr/sbin/hosttag_export
+	# htexport is already limited by filesystem permissions, so doesn't need to be root
+	/usr/bin/htexport
 

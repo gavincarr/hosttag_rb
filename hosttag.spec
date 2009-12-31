@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.5
+Version: 0.6.6
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -35,10 +35,11 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
 install -m0755 bin/hosttag %{buildroot}%{_bindir}/hosttag
-# These next are executable by root only, to restrict tagging to root only
+install -m0755 bin/htexport %{buildroot}%{_bindir}/htexport
+
+# htset and htimport are executable by root only, to restrict tagging to root
 install -m0700 bin/htset %{buildroot}%{_sbindir}/htset
-install -m0700 bin/hosttag_load_data_redis %{buildroot}%{_sbindir}/hosttag_load_data
-install -m0700 bin/hosttag_export %{buildroot}%{_sbindir}/hosttag_export
+install -m0700 bin/htimport %{buildroot}%{_sbindir}/htimport
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
@@ -61,10 +62,15 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
-%attr(0700,root,root) %{_sbindir}/hosttag_load_data
-%attr(0700,root,root) %{_sbindir}/hosttag_export
+%attr(0755,root,root) %{_bindir}/htexport
+%attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Thu Dec 31 2009 Gavin Carr <gavin@openfusion.com.au> 0.6.6
+- Rename hosttag_export to htexport, and hosttag_load_data to htimport.
+- Change old --import parameter to htimport to --delete, like htexport.
+- Make htimport more verbose, like htexport.
+
 * Tue Dec 29 2009 Gavin Carr <gavin@openfusion.com.au> 0.6.5
 - Add hosttag_export utility to export redis db back to directory tree.
 

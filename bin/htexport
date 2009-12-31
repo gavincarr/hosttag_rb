@@ -21,7 +21,7 @@ end
 
 def parse_options(options)
   opts = OptionParser.new
-  opts.banner = "Usage: hosttag_load_data_redis [options]"
+  opts.banner = "Usage: htexport [options]"
   opts.on('-?', '-h', '--help') do
     puts opts
     exit
@@ -35,7 +35,7 @@ def parse_options(options)
   opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
     options[:port] = val
   end
-  opts.on('--delete', 'Delete mode - remove all directories below data dir before exporting') do
+  opts.on('--delete', 'Delete mode - remove all directories from data dir before exporting') do
     options[:delete] = true
   end
   opts.on('-n', '--noop', 'Noop mode - only report what would be exported') do
