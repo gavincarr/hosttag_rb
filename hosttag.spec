@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.4
+Version: 0.6.5
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -33,10 +33,12 @@ This package contains the hosttag server.
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}%{_sbindir}
 install -m0755 bin/hosttag %{buildroot}%{_bindir}/hosttag
 # These next are executable by root only, to restrict tagging to root only
-install -m0700 bin/htset %{buildroot}%{_bindir}/htset
-install -m0700 bin/hosttag_load_data_redis %{buildroot}%{_bindir}/hosttag_load_data
+install -m0700 bin/htset %{buildroot}%{_sbindir}/htset
+install -m0700 bin/hosttag_load_data_redis %{buildroot}%{_sbindir}/hosttag_load_data
+install -m0700 bin/hosttag_export %{buildroot}%{_sbindir}/hosttag_export
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
@@ -52,16 +54,20 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %defattr(-,root,root)
 %{_bindir}/hosttag
 %{_bindir}/ht
-%attr(0700,root,root) %{_bindir}/htset
+%attr(0700,root,root) %{_sbindir}/htset
 %doc README LICENCE
 
 %files server
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
-%attr(0700,root,root) %{_bindir}/hosttag_load_data
+%attr(0700,root,root) %{_sbindir}/hosttag_load_data
+%attr(0700,root,root) %{_sbindir}/hosttag_export
 
 %changelog
+* Tue Dec 29 2009 Gavin Carr <gavin@openfusion.com.au> 0.6.5
+- Add hosttag_export utility to export redis db back to directory tree.
+
 * Tue Dec 08 2009 Gavin Carr <gavin@openfusion.com.au> 0.6
 - Move from tokyo cabinet/tyrant server to redis-based one.
 - Rewrite client in ruby.

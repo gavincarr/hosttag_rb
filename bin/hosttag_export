@@ -1,0 +1,94 @@
+#!/usr/bin/ruby
+#
+# Export host tags held from redis to /etc/hosttag
+#
+
+require 'rubygems'
+require 'redis'
+require 'optparse'
+require 'ftools'
+require 'fileutils'
+
+DATA_DIR = '/etc/hosttag'
+
+# ------------------------------------------------------------------------------
+# Subroutines
+
+def die(error)
+  puts error
+  exit 1
+end
+
+def parse_options(options)
+  opts = OptionParser.new
+  opts.banner = "Usage: hosttag_load_data_redis [options]"
+  opts.on('-?', '-h', '--help') do
+    puts opts
+    exit
+  end
+  opts.on('-h', '--help', '-?', 'Show this usage information') do
+    die(opts)
+  end
+  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
+    options[:server] = val
+  end
+  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
+    options[:port] = val
+  end
+  opts.on('--delete', 'Delete mode - remove all directories below data dir before exporting') do
+    options[:delete] = true
+  end
+  opts.on('-n', '--noop', 'Noop mode - only report what would be exported') do
+    options[:noop] = true
+  end
+  opts.on('-v', '--verbose', 'Verbose output') do
+    options[:verbose] = true
+  end
+
+  # Parse options
+  begin
+    args = opts.parse(ARGV) 
+  rescue => e
+    die("Error: " + opts) 
+  end
+
+  if args.length > 0
+    die("Error: " + opts) 
+  end
+
+  return options, args
+end
+
+def prune_data_directory
+  # TODO
+  die "--delete mode not implemented yet"
+end
+
+# ----------------------------------------------------------------------------
+# Main
+
+defaults = { :server => 'hosttag', :port => 6379 }
+options, args = parse_options( defaults )
+
+r = Redis.new( :host => options[:server], :port => options[:port] )
+
+Dir.chdir(DATA_DIR)
+
+# If in delete mode, prune the data directory
+if options[:delete] and not options[:noop]
+  prune_data_directory
+end
+
+r.set_members("hosttag/all_hosts").each do |host|
+  if not File.directory?(host)
+    puts "+ #{host}/"
+    Dir.mkdir(host, 0664) if not options[:noop]
+  end
+  r.set_members("hosttag/host/#{host}").each do |tag|
+    if not File.exist?("#{host}/#{tag}")
+      puts "+ #{host}/#{tag}"
+      FileUtils.touch "#{host}/#{tag}" if not options[:noop]
+    end
+  end
+end
+
