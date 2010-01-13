@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.6
+Version: 0.6.7
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -66,6 +66,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Wed Jan 13 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.7
+- Add --list mode to hosttag.
+
 * Thu Dec 31 2009 Gavin Carr <gavin@openfusion.com.au> 0.6.6
 - Rename hosttag_export to htexport, and hosttag_load_data to htimport.
 - Change old --import parameter to htimport to --delete, like htexport.

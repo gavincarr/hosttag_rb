@@ -28,7 +28,7 @@ options = {
 arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
 opts = OptionParser.new
-opts.banner = "Usage: hosttag.rb [options] <tag> [<tag2>...]"
+opts.banner = "Usage: hosttag [options] <tag> [<tag2>...]"
 opts.on('-?', '-h', '--help') do
   puts opts
   exit
@@ -38,6 +38,9 @@ opts.on('-a', '--and', 'Report hosts with ALL the given tags (AND result sets)')
 end
 opts.on('-o', '--or',  'Report hosts with ANY of the given tags (OR result sets)') do
   options[:rel] = 'or'
+end
+opts.on('-l', '--list', "List tags individually against each host") do
+  options[:list] = 1
 end
 opts.on('-t', '--tag', '--tags', "Tag mode: report tags for the given hosts") do
   options[:arg_type] = 'host'
@@ -113,22 +116,36 @@ end
 
 # Standard request
 if options[:all] == 0
-  begin
-    result = lookup_keys(r, args, options[:arg_type], options[:rel], options[:verbose]);
-  rescue
-    die $! unless options[:arg_type] == 'tag'
-    # If default lookups failed as a tag, try again as a host
-    error1 = $!
-    begin
-      result = lookup_keys(r, args, arg_type_invert[options[:arg_type]], options[:rel], options[:verbose])
-    rescue
-      # Failed a second time - rethrow original error
-      die error1
-    end
+  # In list mode, process all args separately; otherwise, do them all at once
+  if options[:list]
+    arg_list = args
+  else
+    arg_list = [ args ]
   end
 
-  # Report
-  puts result.sort.join(' ')
+  arg_list.each do |a|
+    begin
+      result = lookup_keys(r, a, options[:arg_type], options[:rel], options[:verbose]);
+    rescue
+      die $! unless options[:arg_type] == 'tag'
+      # If default lookups failed as a tag, try again as a host
+      error1 = $!
+      begin
+        result = lookup_keys(r, a, arg_type_invert[options[:arg_type]], options[:rel], options[:verbose])
+      rescue
+        # Failed a second time - rethrow original error
+        die error1
+      end
+    end
+
+    # Report
+    if options[:list]
+#     printf("%-20s %s\n", "#{a}:", result.sort.join(' '))
+      puts "#{a}: #{result.sort.join(' ')}"
+    else
+      puts result.sort.join(' ')
+    end
+  end
 
 # All request
 else
