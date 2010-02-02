@@ -103,20 +103,24 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
     key = "hosttag/host/#{host}" 
     skip_host = false
     tags.each do |tag| 
-      if (mode == 'htdel')
-        r.set_delete(key, tag) 
-      else
+      if (mode != 'htdel')
         r.set_add(key, tag) 
+      else
+        r.set_delete(key, tag) 
       end
       skip_host = true if tag == 'SKIP'
     end
     # Add/delete to/from all_hosts sets
-    if (mode == 'htdel')
-      r.set_delete("hosttag/all_hosts", host)
-      r.set_delete("hosttag/all_hosts_noskip", host) unless skip_host
-    else
+    if (mode != 'htdel')
       r.set_add("hosttag/all_hosts", host)
-      r.set_add("hosttag/all_hosts_noskip", host) unless skip_host
+      if skip_host:
+        r.set_delete("hosttag/all_hosts_noskip", host)
+      else
+        r.set_add("hosttag/all_hosts_noskip", host)
+      end
+    else
+      r.set_delete("hosttag/all_hosts", host)
+      r.set_delete("hosttag/all_hosts_noskip", host)
     end
   end
 
@@ -124,19 +128,19 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
   tags.each do |tag|
     key = "hosttag/tag/#{tag}" 
     hosts.each do |host| 
-      if (mode == 'htdel')
-        r.set_delete(key, host) 
-      else
+      if (mode != 'htdel')
         r.set_add(key, host) 
+      else
+        r.set_delete(key, host) 
       end
     end
     # Add to all_tags sets
-    if (mode == 'htdel')
-      r.set_delete("hosttag/all_tags", tag)
-      r.set_delete("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
-    else
+    if (mode != 'htdel')
       r.set_add("hosttag/all_tags", tag)
       r.set_add("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+    else
+      r.set_delete("hosttag/all_tags", tag)
+      r.set_delete("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
     end
   end
 end
