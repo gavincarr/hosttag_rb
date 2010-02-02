@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.7
+Version: 0.6.8
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -66,6 +66,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Tue Feb 02 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.8
+- Fix bug with htset not deleting host from noskip list if SKIP tag set.
+
 * Wed Jan 13 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.7
 - Add --list mode to hosttag.
 
