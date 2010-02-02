@@ -47,6 +47,7 @@ install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
 
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
+ln -s htset htdel
 
 %clean
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
@@ -56,6 +57,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{_bindir}/hosttag
 %{_bindir}/ht
 %attr(0700,root,root) %{_sbindir}/htset
+%{_sbindir}/htdel
 %doc README LICENCE
 
 %files server
@@ -66,6 +68,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Wed Feb 03 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.9
+- Add missing htdel symlink to hosttag package.
+
 * Tue Feb 02 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.8
 - Fix bug with htset not deleting host from noskip list if SKIP tag set.
 
