@@ -47,6 +47,7 @@ install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
 
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
+cd %{buildroot}%{_sbindir}
 ln -s htset htdel
 
 %clean
