@@ -39,6 +39,7 @@ install -m0755 bin/htexport %{buildroot}%{_bindir}/htexport
 
 # htset and htimport are executable by root only, to restrict tagging to root
 install -m0700 bin/htset %{buildroot}%{_sbindir}/htset
+install -m0700 bin/htdump %{buildroot}%{_sbindir}/htdump
 install -m0700 bin/htimport %{buildroot}%{_sbindir}/htimport
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
@@ -58,6 +59,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{_bindir}/hosttag
 %{_bindir}/ht
 %attr(0700,root,root) %{_sbindir}/htset
+%attr(0700,root,root) %{_sbindir}/htdump
 %{_sbindir}/htdel
 %doc README LICENCE
 
@@ -69,6 +71,11 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Fri Feb 05 2010 Gavin Carr <gavin@openfusion.com.au> 0.7
+- Add namespace option to all binaries.
+- Add options to htdump.
+- Add missing htdump to spec file.
+
 * Wed Feb 03 2010 Gavin Carr <gavin@openfusion.com.au> 0.6.9
 - Add missing htdel symlink to hosttag package.
 
