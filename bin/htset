@@ -36,6 +36,9 @@ def parse_options(options, me)
   opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
     options[:port] = val
   end
+  opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
+    options[:namespace] = val
+  end
   opts.on('-v', '--verbose', 'Verbose output') do
     options[:verbose] = true
   end
@@ -55,9 +58,10 @@ def parse_options(options, me)
 end
 
 # Classify args into hosts, tags, and uncertain buckets
-def classify_args(r, args, verbose)
+def classify_args(r, args, options)
   results = { :host => [], :tag => [], :uncertain => [] }
   arg_type = 'host'
+  verbose = options[:verbose]
 
   # First arg must be host, and last tag, by definition
   results[:host].push(args.shift)
@@ -65,7 +69,7 @@ def classify_args(r, args, verbose)
 
   # Classify remainder by checking for existence in redis
   while a = args.shift
-    if r.key?("hosttag/#{arg_type}/#{a}")
+    if r.key?("#{options[:namespace]}/#{arg_type}/#{a}")
       if arg_type == 'host'
         # if 'a' is a valid host, then everything before 'a' must be too
         if results[:uncertain].length > 0
@@ -100,7 +104,7 @@ end
 def adjust_hosttags(r, hosts, tags, mode, verbose)
   # Add tags to each host
   hosts.each do |host|
-    key = "hosttag/host/#{host}" 
+    key = "#{options[:namespace]}/host/#{host}" 
     skip_host = false
     tags.each do |tag| 
       if (mode != 'htdel')
@@ -112,21 +116,21 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
     end
     # Add/delete to/from all_hosts sets
     if (mode != 'htdel')
-      r.set_add("hosttag/all_hosts", host)
+      r.set_add("#{options[:namespace]}/all_hosts", host)
       if skip_host:
-        r.set_delete("hosttag/all_hosts_noskip", host)
+        r.set_delete("#{options[:namespace]}/all_hosts_noskip", host)
       else
-        r.set_add("hosttag/all_hosts_noskip", host)
+        r.set_add("#{options[:namespace]}/all_hosts_noskip", host)
       end
     else
-      r.set_delete("hosttag/all_hosts", host)
-      r.set_delete("hosttag/all_hosts_noskip", host)
+      r.set_delete("#{options[:namespace]}/all_hosts", host)
+      r.set_delete("#{options[:namespace]}/all_hosts_noskip", host)
     end
   end
 
   # Add/delete hosts to/from each tag
   tags.each do |tag|
-    key = "hosttag/tag/#{tag}" 
+    key = "#{options[:namespace]}/tag/#{tag}" 
     hosts.each do |host| 
       if (mode != 'htdel')
         r.set_add(key, host) 
@@ -136,11 +140,11 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
     end
     # Add to all_tags sets
     if (mode != 'htdel')
-      r.set_add("hosttag/all_tags", tag)
-      r.set_add("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+      r.set_add("#{options[:namespace]}/all_tags", tag)
+      r.set_add("#{options[:namespace]}/all_tags_noskip", tag) unless tag == 'SKIP'
     else
-      r.set_delete("hosttag/all_tags", tag)
-      r.set_delete("hosttag/all_tags_noskip", tag) unless tag == 'SKIP'
+      r.set_delete("#{options[:namespace]}/all_tags", tag)
+      r.set_delete("#{options[:namespace]}/all_tags_noskip", tag) unless tag == 'SKIP'
     end
   end
 end
@@ -150,12 +154,12 @@ end
 
 mode = $0.sub(/^.*\//, '')
 
-defaults = { :server => 'hosttag', :port => 6379 }
+defaults = { :server => 'hosttag', :port => 6379, namespace => 'hosttag' }
 options, args = parse_options( defaults, mode )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
 
-results = classify_args(r, args, options[:verbose])
+results = classify_args(r, args, options)
 if options[:verbose] 
   print "+ results: "
   pp results 

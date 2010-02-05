@@ -2,11 +2,70 @@
 
 require 'rubygems'
 require 'redis'
+require 'optparse'
 
-r = Redis.new()
+defaults = { 
+  :server => 'hosttag', 
+  :port => 6379, 
+  :data_dir => '/etc/hosttag', 
+  :namespace => 'hosttag',
+}
+
+def die(error)
+  puts error
+  exit 1
+end
+
+def parse_options(options)
+  opts = OptionParser.new
+  opts.banner = "Usage: htimport [options]"
+  opts.on('-?', '-h', '--help') do
+    puts opts
+    exit
+  end
+  opts.on('-h', '--help', '-?', 'Show this usage information') do
+    die(opts)
+  end
+  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to. Default: hosttag') do |val|
+    options[:server] = val
+  end
+  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to. Default: 6379') do |val|
+    options[:port] = val
+  end
+  opts.on('--ns=STR', '--namespace=STR', String, 'Namespace from which to dump hosttag data. Default: hosttag') do |val|
+    options[:namespace] = val
+  end
+
+  # Parse options
+  begin
+    args = opts.parse(ARGV) 
+  rescue => e
+    puts "Error: " << e
+    usage(opts)
+  end
+
+  if args.length > 0
+    puts "Error: unexpected arguments '#{args}'"
+    usage(opts)
+  end
+
+  return options
+end
+
+def usage(opts)
+  puts opts
+  exit
+end
+
+# ----------------------------------------------------------------------------
+# Main
+
+options, args = parse_options( defaults )
+
+r = Redis.new( :host => options[:server], :port => options[:port] )
 
 # Dump
-r.keys("hosttag/*").sort.each do |k|
+r.keys("#{options[:namespace]}/*").sort.each do |k|
   puts "#{k}: #{r.set_members(k).sort.join(' ')}"
 end
 

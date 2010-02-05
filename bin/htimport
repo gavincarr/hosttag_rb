@@ -8,7 +8,12 @@ require 'redis'
 require 'optparse'
 require 'ftools'
 
-DATA_DIR = '/etc/hosttag'
+defaults = { 
+  :server => 'hosttag', 
+  :port => 6379, 
+  :datadir => '/etc/hosttag', 
+  :namespace => 'hosttag',
+}
 
 # ------------------------------------------------------------------------------
 # Subroutines
@@ -28,14 +33,20 @@ def parse_options(options)
   opts.on('-h', '--help', '-?', 'Show this usage information') do
     die(opts)
   end
-  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
+  opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to. Default: hosttag') do |val|
     options[:server] = val
   end
-  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
+  opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to. Default: 6379') do |val|
     options[:port] = val
   end
   opts.on('--delete', 'Delete mode - remove all hosttags from redis before importing') do
     options[:delete] = true
+  end
+  opts.on('--datadir=DIR', String, 'Data directory from which to load data. Default: /etc/hosttag') do |val|
+    options[:datadir] = val
+  end
+  opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
+    options[:namespace] = val
   end
   opts.on('-v', '--verbose', 'Verbose output') do
     options[:verbose] = true
@@ -45,21 +56,28 @@ def parse_options(options)
   begin
     args = opts.parse(ARGV) 
   rescue => e
-    die("Error: " + opts) 
+    puts "Error: " << e
+    usage(opts)
   end
 
   if args.length > 0
-    die("Error: " + opts) 
+    puts "Error: unexpected arguments '#{args}'"
+    usage(opts)
   end
 
-  return options, args
+  return options
 end
 
-def load_tags
+def usage(opts)
+  puts opts
+  exit
+end
+
+def load_tags(options)
   tag_hash = {}
   skip_hosts_hash = {}
 
-  Dir.chdir(DATA_DIR)
+  Dir.chdir(options[:datadir])
   Dir.glob("*").each do |host|
     next if not File.directory?(host)
 
@@ -90,16 +108,16 @@ def deep_invert(hash)
   inverted
 end
 
-def redis_delete_hosttag_keys(r)
-  r.keys('hosttag/*').each { |k| r.delete(k) }
+def redis_delete_hosttag_keys(r, namespace)
+  r.keys("#{namespace}/*").each { |k| r.delete(k) }
 end
 
-def write_hash_to_redis(r, type, tag_hash)
+def write_hash_to_redis(r, namespace, type, tag_hash, options)
   tag_hash.each do |key, val_array|
-    redis_key = "hosttag/#{type}/#{key}"
+    redis_key = "#{namespace}/#{type}/#{key}"
     val_array.each do |val| 
       next if r.set_member?(redis_key, val)
-      puts "+ #{type}/#{key}/#{val}"
+      puts "+ #{type}/#{key}/#{val}" if options[:verbose]
       r.set_add(redis_key, val) 
     end
   end
@@ -108,18 +126,17 @@ end
 # ----------------------------------------------------------------------------
 # Main
 
-defaults = { :server => 'hosttag', :port => 6379 }
 options, args = parse_options( defaults )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
 
 # If in 'delete' mode, delete all hosttag keys
 if options[:delete]
-  redis_delete_hosttag_keys(r)
+  redis_delete_hosttag_keys(r, options[:namespace])
 end
 
 # Load host => tag mappings from disk
-host_tag_hash, skip_hosts_hash = load_tags()
+host_tag_hash, skip_hosts_hash = load_tags(options)
 #tag_host_hash = deep_invert(host_tag_hash)
 
 # Invert host_tag_hash (and omit skipped hosts) to get tag => host mappings
@@ -133,22 +150,22 @@ host_tag_hash.each do |h, v|
 end
 
 # Load into redis
-write_hash_to_redis(r, 'host', host_tag_hash)
-write_hash_to_redis(r, 'tag', tag_host_hash)
+write_hash_to_redis(r, options[:namespace], 'host', host_tag_hash, options)
+write_hash_to_redis(r, options[:namespace], 'tag',  tag_host_hash, options)
 
 # Add ALL entries
 if not host_tag_hash.empty?
   host_tag_hash.each_key do |k| 
-    r.set_add("hosttag/all_hosts", k)
+    r.set_add("#{options[:namespace]}/all_hosts", k)
     next if skip_hosts_hash[k]
-    r.set_add("hosttag/all_hosts_noskip", k)
+    r.set_add("#{options[:namespace]}/all_hosts_noskip", k)
   end
 end
 if not tag_host_hash.empty?
   tag_host_hash.each_key do |k| 
-    r.set_add("hosttag/all_tags", k)
+    r.set_add("#{options[:namespace]}/all_tags", k)
     next if k == 'SKIP'
-    r.set_add("hosttag/all_tags_noskip", k)
+    r.set_add("#{options[:namespace]}/all_tags_noskip", k)
   end
 end
 

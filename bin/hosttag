@@ -23,7 +23,7 @@ require 'optparse'
 
 options = { 
   :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', 
-  :server => 'hosttag', :port => 6379,
+  :server => 'hosttag', :port => 6379, :namespace => 'hosttag',
 }
 arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
@@ -52,11 +52,14 @@ opts.on('-T', '--all-tags', 'Report all tags') do
   options[:all] += 1
   options[:all_key] = 'all_tags'
 end
-opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
+opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to. Default: hosttag') do |val|
   options[:server] = val
 end
 opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
   options[:port] = val
+end
+opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
+  options[:namespace] = val
 end
 opts.on('-v', '--verbose', 'Verbose output') do
   options[:verbose] = true
@@ -85,16 +88,16 @@ def die(error)
   exit 1
 end
 
-def lookup_keys(r, args, arg_type, rel, verbose)
+def lookup_keys(r, args, arg_type, rel, options)
   # Default a rel if we have multiple args
   if args.length > 1 and not rel
     rel = arg_type == 'tag' ? 'and' : 'or'
   end
-  puts "+ rel (#{arg_type}): #{rel}" if verbose
+  puts "+ rel (#{arg_type}): #{rel}" if options[:verbose]
 
   # Map keys to fetch
-  keys = args.collect {|v| "hosttag/#{arg_type}/#{v}" }
-  puts "+ keys: #{keys.join(' ')}" if verbose
+  keys = args.collect {|v| "#{options[:namespace]}/#{arg_type}/#{v}" }
+  puts "+ keys: #{keys.join(' ')}" if options[:verbose]
 
   # Check all keys exist
   keys.each do |k| 
@@ -125,13 +128,13 @@ if options[:all] == 0
 
   arg_list.each do |a|
     begin
-      result = lookup_keys(r, a, options[:arg_type], options[:rel], options[:verbose]);
+      result = lookup_keys(r, a, options[:arg_type], options[:rel], options);
     rescue
       die $! unless options[:arg_type] == 'tag'
       # If default lookups failed as a tag, try again as a host
       error1 = $!
       begin
-        result = lookup_keys(r, a, arg_type_invert[options[:arg_type]], options[:rel], options[:verbose])
+        result = lookup_keys(r, a, arg_type_invert[options[:arg_type]], options[:rel], options)
       rescue
         # Failed a second time - rethrow original error
         die error1
@@ -149,7 +152,7 @@ if options[:all] == 0
 
 # All request
 else
-  key = "hosttag/#{options[:all_key]}"
+  key = "#{options[:namespace]}/#{options[:all_key]}"
   key += "_noskip" if options[:all] == 1
   puts "+ key: #{key}" if options[:verbose]
   puts r.set_members(key).sort.join(' ');
