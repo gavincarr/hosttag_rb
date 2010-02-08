@@ -1,3 +1,4 @@
+%define ruby_sitelib %(ruby -rrbconfig -e "puts Config::CONFIG['sitelibdir']")
 
 Summary: Hosttag client
 Name: hosttag
@@ -18,6 +19,7 @@ This package contains the hosttag client.
 %package server
 Summary: Hosttag server
 Group: Applications/System
+Requires: hosttag = %version
 Requires: redis, rubygems, rubygem-redis
 
 %description server
@@ -31,6 +33,9 @@ This package contains the hosttag server.
 
 %install
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
+
+mkdir -p %{buildroot}%{ruby_sitelib}/hosttag
+install -m0644 lib/hosttag/server.rb %{buildroot}%{ruby_sitelib}/hosttag
 
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_sbindir}
@@ -56,6 +61,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
+%{ruby_sitelib}/hosttag/*
 %{_bindir}/hosttag
 %{_bindir}/ht
 %attr(0700,root,root) %{_sbindir}/htset
