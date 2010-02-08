@@ -154,7 +154,7 @@ end
 
 mode = $0.sub(/^.*\//, '')
 
-defaults = { :server => 'hosttag', :port => 6379, namespace => 'hosttag' }
+defaults = { :server => 'hosttag', :port => 6379, :namespace => 'hosttag' }
 options, args = parse_options( defaults, mode )
 
 r = Redis.new( :host => options[:server], :port => options[:port] )
