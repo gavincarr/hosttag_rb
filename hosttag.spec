@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.7.1
+Version: 0.8
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -71,6 +71,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.8
+- Refactor, pulling server bits into Hosttag::Server.
+
 * Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.1
 - Fix typo in htset.
 
