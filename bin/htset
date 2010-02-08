@@ -22,6 +22,7 @@ def die(error)
 end
 
 def parse_options(me)
+  options = {}
   opts = OptionParser.new
   opts.banner = "Usage: #{me} [options] <host> [<host2> ...] <tag> [<tag2>...]"
   opts.on('-?', '-h', '--help') do
@@ -133,7 +134,7 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
 
   # Add/delete hosts to/from each tag
   tags.each do |tag|
-    key = "#{options[:namespace]}/tag/#{tag}" 
+    key = r.get_key('tag', tag)
     hosts.each do |host| 
       if (mode != 'htdel')
         r.set_add(key, host) 
