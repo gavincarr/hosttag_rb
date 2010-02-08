@@ -3,7 +3,7 @@
 require 'test/unit'
 require 'ftools'
 
-class TestHostTag < Test::Unit::TestCase
+class TestHosttag < Test::Unit::TestCase
 
   TESTS = [
     [ 'centos',                 'a m n' ],
@@ -43,6 +43,7 @@ class TestHostTag < Test::Unit::TestCase
     bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     File.directory?(datadir) or throw "missing datadir #{datadir}"
     `#{bindir}/htimport #{test_args} --delete --datadir #{datadir}`
+    `#{bindir}/htdump #{test_args}`
 
     TESTS.each do |args, expected|
       got = `#{bindir}/hosttag #{test_args} #{args}`.chomp
