@@ -1,7 +1,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.6.9
+Version: 0.7.1
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -71,6 +71,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.1
+- Fix typo in htset.
+
 * Fri Feb 05 2010 Gavin Carr <gavin@openfusion.com.au> 0.7
 - Add namespace option to all binaries.
 - Add options to htdump.

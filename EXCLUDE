@@ -2,4 +2,3 @@ EXCLUDE
 etc/htserver.tt
 bin/hosttag.py
 bin/hosttag_load_data_tt
-bin/htdump
