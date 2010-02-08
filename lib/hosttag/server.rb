@@ -12,7 +12,7 @@ module Hosttag
     end
 
     def get_key(*elt)
-      "#{@defaults[:namespace]}/#{elt.join('/')}"
+      "#{@defaults[:namespace]}::#{elt.join(':')}"
     end
   end
 end
