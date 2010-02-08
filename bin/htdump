@@ -1,15 +1,11 @@
 #!/usr/bin/ruby
 
-require 'rubygems'
-require 'redis'
 require 'optparse'
 
-defaults = { 
-  :server => 'hosttag', 
-  :port => 6379, 
-  :data_dir => '/etc/hosttag', 
-  :namespace => 'hosttag',
-}
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'hosttag/server'
+
+defaults = { :data_dir => '/etc/hosttag' }
 
 def die(error)
   puts error
@@ -62,10 +58,10 @@ end
 
 options, args = parse_options( defaults )
 
-r = Redis.new( :host => options[:server], :port => options[:port] )
+r = Hosttag::Server.new(options)
 
 # Dump
-r.keys("#{options[:namespace]}/*").sort.each do |k|
+r.keys(r.get_key('*')).sort.each do |k|
   puts "#{k}: #{r.set_members(k).sort.join(' ')}"
 end
 

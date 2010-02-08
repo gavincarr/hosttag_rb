@@ -17,13 +17,13 @@
 #   ht -T                           Show all tags
 #
 
-require 'rubygems'
-require 'redis'
 require 'optparse'
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'hosttag/server'
 
 options = { 
   :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', 
-  :server => 'hosttag', :port => 6379, :namespace => 'hosttag',
 }
 arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
@@ -80,8 +80,7 @@ if args.length == 0 and options[:all] == 0
   usage(opts) 
 end
 
-# Create redis object
-r = Redis.new( :host => options[:server], :port => options[:port] )
+r = Hosttag::Server.new(options)
 
 def die(error)
   puts error
@@ -96,7 +95,7 @@ def lookup_keys(r, args, arg_type, rel, options)
   puts "+ rel (#{arg_type}): #{rel}" if options[:verbose]
 
   # Map keys to fetch
-  keys = args.collect {|v| "#{options[:namespace]}/#{arg_type}/#{v}" }
+  keys = args.collect {|v| r.get_key(arg_type, v) }
   puts "+ keys: #{keys.join(' ')}" if options[:verbose]
 
   # Check all keys exist
@@ -152,7 +151,7 @@ if options[:all] == 0
 
 # All request
 else
-  key = "#{options[:namespace]}/#{options[:all_key]}"
+  key = r.get_key(options[:all_key])
   key += "_noskip" if options[:all] == 1
   puts "+ key: #{key}" if options[:verbose]
   puts r.set_members(key).sort.join(' ');

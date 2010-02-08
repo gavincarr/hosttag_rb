@@ -6,11 +6,12 @@
 #   htset <host1> [<host2> ...] <tag> [<tag2> ...]
 #
 
-require 'rubygems'
-require 'redis'
 require 'optparse'
 require 'ftools'
 require 'pp'
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'hosttag/server'
 
 # ------------------------------------------------------------------------------
 # Subroutines
@@ -20,7 +21,7 @@ def die(error)
   exit 1
 end
 
-def parse_options(options, me)
+def parse_options(me)
   opts = OptionParser.new
   opts.banner = "Usage: #{me} [options] <host> [<host2> ...] <tag> [<tag2>...]"
   opts.on('-?', '-h', '--help') do
@@ -69,7 +70,7 @@ def classify_args(r, args, options)
 
   # Classify remainder by checking for existence in redis
   while a = args.shift
-    if r.key?("#{options[:namespace]}/#{arg_type}/#{a}")
+    if r.key?(r.get_key(arg_type, a))
       if arg_type == 'host'
         # if 'a' is a valid host, then everything before 'a' must be too
         if results[:uncertain].length > 0
@@ -104,7 +105,7 @@ end
 def adjust_hosttags(r, hosts, tags, mode, verbose)
   # Add tags to each host
   hosts.each do |host|
-    key = "#{options[:namespace]}/host/#{host}" 
+    key = r.get_key('host', host)
     skip_host = false
     tags.each do |tag| 
       if (mode != 'htdel')
@@ -115,16 +116,18 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
       skip_host = true if tag == 'SKIP'
     end
     # Add/delete to/from all_hosts sets
+    all_hosts = r.get_key('all_hosts')
+    all_hosts_noskip = r.get_key('all_hosts_noskip')
     if (mode != 'htdel')
-      r.set_add("#{options[:namespace]}/all_hosts", host)
+      r.set_add(all_hosts, host)
       if skip_host:
-        r.set_delete("#{options[:namespace]}/all_hosts_noskip", host)
+        r.set_delete(all_hosts_noskip, host)
       else
-        r.set_add("#{options[:namespace]}/all_hosts_noskip", host)
+        r.set_add(all_hosts_noskip, host)
       end
     else
-      r.set_delete("#{options[:namespace]}/all_hosts", host)
-      r.set_delete("#{options[:namespace]}/all_hosts_noskip", host)
+      r.set_delete(all_hosts, host)
+      r.set_delete(all_hosts_noskip, host)
     end
   end
 
@@ -139,12 +142,14 @@ def adjust_hosttags(r, hosts, tags, mode, verbose)
       end
     end
     # Add to all_tags sets
+    all_tags = r.get_key('all_hosts')
+    all_tags_noskip = r.get_key('all_hosts_noskip')
     if (mode != 'htdel')
-      r.set_add("#{options[:namespace]}/all_tags", tag)
-      r.set_add("#{options[:namespace]}/all_tags_noskip", tag) unless tag == 'SKIP'
+      r.set_add(all_tags, tag)
+      r.set_add(all_tags_noskip, tag) unless tag == 'SKIP'
     else
-      r.set_delete("#{options[:namespace]}/all_tags", tag)
-      r.set_delete("#{options[:namespace]}/all_tags_noskip", tag) unless tag == 'SKIP'
+      r.set_delete(all_tags, tag)
+      r.set_delete(all_tags_noskip, tag) unless tag == 'SKIP'
     end
   end
 end
@@ -154,10 +159,9 @@ end
 
 mode = $0.sub(/^.*\//, '')
 
-defaults = { :server => 'hosttag', :port => 6379, :namespace => 'hosttag' }
-options, args = parse_options( defaults, mode )
+options, args = parse_options(mode)
 
-r = Redis.new( :host => options[:server], :port => options[:port] )
+r = Hosttag::Server.new(options)
 
 results = classify_args(r, args, options)
 if options[:verbose] 

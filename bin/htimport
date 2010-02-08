@@ -3,17 +3,13 @@
 # Import host tags from /etc/hosttag into redis
 #
 
-require 'rubygems'
-require 'redis'
 require 'optparse'
 require 'ftools'
 
-defaults = { 
-  :server => 'hosttag', 
-  :port => 6379, 
-  :datadir => '/etc/hosttag', 
-  :namespace => 'hosttag',
-}
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'hosttag/server'
+
+defaults = { :datadir => '/etc/hosttag' }
 
 # ------------------------------------------------------------------------------
 # Subroutines
@@ -108,13 +104,13 @@ def deep_invert(hash)
   inverted
 end
 
-def redis_delete_hosttag_keys(r, namespace)
-  r.keys("#{namespace}/*").each { |k| r.delete(k) }
+def redis_delete_hosttag_keys(r)
+  r.keys(r.get_key("*")).each { |k| r.delete(k) }
 end
 
-def write_hash_to_redis(r, namespace, type, tag_hash, options)
+def write_hash_to_redis(r, type, tag_hash, options)
   tag_hash.each do |key, val_array|
-    redis_key = "#{namespace}/#{type}/#{key}"
+    redis_key = r.get_key(type, key)
     val_array.each do |val| 
       next if r.set_member?(redis_key, val)
       puts "+ #{type}/#{key}/#{val}" if options[:verbose]
@@ -128,11 +124,11 @@ end
 
 options, args = parse_options( defaults )
 
-r = Redis.new( :host => options[:server], :port => options[:port] )
+r = Hosttag::Server.new(options)
 
 # If in 'delete' mode, delete all hosttag keys
 if options[:delete]
-  redis_delete_hosttag_keys(r, options[:namespace])
+  redis_delete_hosttag_keys(r)
 end
 
 # Load host => tag mappings from disk
@@ -150,22 +146,22 @@ host_tag_hash.each do |h, v|
 end
 
 # Load into redis
-write_hash_to_redis(r, options[:namespace], 'host', host_tag_hash, options)
-write_hash_to_redis(r, options[:namespace], 'tag',  tag_host_hash, options)
+write_hash_to_redis(r, 'host', host_tag_hash, options)
+write_hash_to_redis(r, 'tag',  tag_host_hash, options)
 
 # Add ALL entries
 if not host_tag_hash.empty?
   host_tag_hash.each_key do |k| 
-    r.set_add("#{options[:namespace]}/all_hosts", k)
+    r.set_add(r.get_key("all_hosts"), k)
     next if skip_hosts_hash[k]
-    r.set_add("#{options[:namespace]}/all_hosts_noskip", k)
+    r.set_add(r.get_key("all_hosts_noskip"), k)
   end
 end
 if not tag_host_hash.empty?
   tag_host_hash.each_key do |k| 
-    r.set_add("#{options[:namespace]}/all_tags", k)
+    r.set_add(r.get_key("all_tags"), k)
     next if k == 'SKIP'
-    r.set_add("#{options[:namespace]}/all_tags_noskip", k)
+    r.set_add(r.get_key("all_tags_noskip"), k)
   end
 end
 

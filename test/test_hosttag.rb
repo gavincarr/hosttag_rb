@@ -39,12 +39,13 @@ class TestHostTag < Test::Unit::TestCase
     test_args = '--server localhost --ns hosttag_testing'
 
     # Setup
-    datadir = "#{File.dirname(__FILE__)}/test_data"
+    datadir = "#{File.dirname(__FILE__)}/data_hosttag"
+    bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `../bin/htimport #{test_args} --delete --datadir #{datadir}`
+    `#{bindir}/htimport #{test_args} --delete --datadir #{datadir}`
 
     TESTS.each do |args, expected|
-      got = `../bin/hosttag #{test_args} #{args}`.chomp
+      got = `#{bindir}/hosttag #{test_args} #{args}`.chomp
       if expected.is_a?(String)
         assert_equal(expected, got)
       elsif expected.is_a?(Regexp)
