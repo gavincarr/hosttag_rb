@@ -88,7 +88,7 @@ end
 r.set_members(r.get_key('all_hosts')).each do |host|
   if not File.directory?(host)
     puts "+ #{host}/"
-    Dir.mkdir(host, 0664) if not options[:noop]
+    Dir.mkdir(host, 0775) if not options[:noop]
   end
   r.set_members(r.get_key('host', host)).each do |tag|
     if not File.exist?("#{host}/#{tag}")
