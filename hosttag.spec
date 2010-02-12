@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.8
+Version: 0.8.1
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -77,6 +77,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Fri Feb 12 2010 Gavin Carr <gavin@openfusion.com.au> 0.8.1
+- Add a -1 argument to hosttag to list results one per line.
+
 * Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.8
 - Refactor, pulling server bits into Hosttag::Server.
 
