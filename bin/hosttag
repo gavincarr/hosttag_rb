@@ -23,7 +23,7 @@ $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'hosttag/server'
 
 options = { 
-  :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', 
+  :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', :join => ' ',
 }
 arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
 
@@ -52,6 +52,10 @@ opts.on('-T', '--all-tags', 'Report all tags') do
   options[:all] += 1
   options[:all_key] = 'all_tags'
 end
+opts.on('-1', 'List one item per line') do
+  options[:one] = 1
+  options[:join] = "\n"
+end
 opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to. Default: hosttag') do |val|
   options[:server] = val
 end
@@ -79,6 +83,17 @@ end
 if args.length == 0 and options[:all] == 0
   usage(opts) 
 end
+if args.length > 0 and options[:all] > 0
+  if options[:all_key] == 'all_tags'
+    puts "Error: can't specify tags with -T/--all-tags"
+  else
+    puts "Error: can't specify hosts with -A/--all-hosts"
+  end
+  usage(opts) 
+end
+if options[:one] and options[:list]
+  warn "Warning: -l/--list mode doesn't support -1 - ignoring"
+end 
 
 r = Hosttag::Server.new(options)
 
@@ -108,11 +123,11 @@ def lookup_keys(r, args, arg_type, rel, options)
   
   # Lookup and return
   if keys.length == 1
-    r.set_members( keys ).sort.join(' ')
+    r.set_members( keys )
   elsif rel == 'and'
-    r.set_intersect( keys ).sort.join(' ')
+    r.set_intersect( keys )
   else
-    r.set_union( keys ).sort.join(' ')
+    r.set_union( keys )
   end
 end
 
@@ -145,7 +160,7 @@ if options[:all] == 0
 #     printf("%-20s %s\n", "#{a}:", result.sort.join(' '))
       puts "#{a}: #{result.sort.join(' ')}"
     else
-      puts result.sort.join(' ')
+      puts result.sort.join(options[:join])
     end
   end
 
@@ -154,6 +169,6 @@ else
   key = r.get_key(options[:all_key])
   key += "_noskip" if options[:all] == 1
   puts "+ key: #{key}" if options[:verbose]
-  puts r.set_members(key).sort.join(' ');
+  puts r.set_members(key).sort.join(options[:join]);
 end
 
