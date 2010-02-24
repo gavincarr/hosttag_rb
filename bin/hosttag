@@ -22,6 +22,11 @@ require 'optparse'
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'hosttag/server'
 
+def die(error)
+  warn error
+  exit 1
+end
+
 options = { 
   :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', :join => ' ',
 }
@@ -95,11 +100,10 @@ if options[:one] and options[:list]
   warn "Warning: -l/--list mode doesn't support -1 - ignoring"
 end 
 
-r = Hosttag::Server.new(options)
-
-def die(error)
-  puts error
-  exit 1
+begin
+  r = Hosttag::Server.new(options)
+rescue Resolv::ResolvError => e
+  die e
 end
 
 def lookup_keys(r, args, arg_type, rel, options)
