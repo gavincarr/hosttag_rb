@@ -119,7 +119,7 @@ def lookup_keys(r, args, arg_type, rel, options)
 
   # Check all keys exist
   keys.each do |k| 
-    if not r.key?(k) 
+    if not r.exists(k) 
       item = k.sub(%r{^.*/}, '')
       raise "Error: #{arg_type} '#{item}' not found." 
     end
@@ -127,11 +127,11 @@ def lookup_keys(r, args, arg_type, rel, options)
   
   # Lookup and return
   if keys.length == 1
-    r.set_members( keys )
+    r.smembers( keys )
   elsif rel == 'and'
-    r.set_intersect( keys )
+    r.sinter( *keys )
   else
-    r.set_union( keys )
+    r.sunion( *keys )
   end
 end
 
@@ -173,6 +173,6 @@ else
   key = r.get_key(options[:all_key])
   key += "_noskip" if options[:all] == 1
   puts "+ key: #{key}" if options[:verbose]
-  puts r.set_members(key).sort.join(options[:join]);
+  puts r.smembers(key).sort.join(options[:join]);
 end
 
