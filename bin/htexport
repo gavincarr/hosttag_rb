@@ -36,7 +36,7 @@ def parse_options(options)
   opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
     options[:port] = val
   end
-  opts.on('--datadir=DIR', String, 'Data directory from which to load data. Default: /etc/hosttag') do |val|
+  opts.on('--datadir=DIR', String, 'Data directory to export data into. Default: /etc/hosttag') do |val|
     options[:datadir] = val
   end
   opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
@@ -56,11 +56,11 @@ def parse_options(options)
   begin
     args = opts.parse(ARGV) 
   rescue => e
-    die("Error: " + opts) 
+    die(opts) 
   end
 
   if args.length > 0
-    die("Error: " + opts) 
+    die(opts) 
   end
 
   return options, args
@@ -85,12 +85,12 @@ if options[:delete] and not options[:noop]
   prune_data_directory
 end
 
-r.set_members(r.get_key('all_hosts')).each do |host|
+r.smembers(r.get_key('all_hosts')).each do |host|
   if not File.directory?(host)
     puts "+ #{host}/"
     Dir.mkdir(host, 0775) if not options[:noop]
   end
-  r.set_members(r.get_key('host', host)).each do |tag|
+  r.smembers(r.get_key('host', host)).each do |tag|
     if not File.exist?("#{host}/#{tag}")
       puts "+ #{host}/#{tag}"
       FileUtils.touch "#{host}/#{tag}" if not options[:noop]

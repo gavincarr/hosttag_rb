@@ -105,16 +105,16 @@ def deep_invert(hash)
 end
 
 def redis_delete_hosttag_keys(r)
-  r.keys(r.get_key("*")).each { |k| r.delete(k) }
+  r.keys(r.get_key("*")).each { |k| r.del(k) }
 end
 
 def write_hash_to_redis(r, type, tag_hash, options)
   tag_hash.each do |key, val_array|
     redis_key = r.get_key(type, key)
     val_array.each do |val| 
-      next if r.set_member?(redis_key, val)
+      next if r.sismember(redis_key, val)
       puts "+ #{type}/#{key}/#{val}" if options[:verbose]
-      r.set_add(redis_key, val) 
+      r.sadd(redis_key, val) 
     end
   end
 end
@@ -152,16 +152,16 @@ write_hash_to_redis(r, 'tag',  tag_host_hash, options)
 # Add ALL entries
 if not host_tag_hash.empty?
   host_tag_hash.each_key do |k| 
-    r.set_add(r.get_key("all_hosts"), k)
+    r.sadd(r.get_key("all_hosts"), k)
     next if skip_hosts_hash[k]
-    r.set_add(r.get_key("all_hosts_noskip"), k)
+    r.sadd(r.get_key("all_hosts_noskip"), k)
   end
 end
 if not tag_host_hash.empty?
   tag_host_hash.each_key do |k| 
-    r.set_add(r.get_key("all_tags"), k)
+    r.sadd(r.get_key("all_tags"), k)
     next if k == 'SKIP'
-    r.set_add(r.get_key("all_tags_noskip"), k)
+    r.sadd(r.get_key("all_tags_noskip"), k)
   end
 end
 
