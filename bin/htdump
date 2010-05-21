@@ -61,7 +61,7 @@ options, args = parse_options( defaults )
 r = Hosttag::Server.new(options)
 
 # Dump
-r.keys(r.get_key('*')).sort.each do |k|
-  puts "#{k}: #{r.set_members(k).sort.join(' ')}"
+r.keys(r.get_key('*')).split(%r{ }).sort.each do |k|
+  puts "#{k}: #{r.smembers(k).sort.join(' ')}"
 end
 
