@@ -82,6 +82,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 * Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.8
 - Refactor, pulling server bits into Hosttag::Server.
+- Add htset unit test, and fix bugs arising.
 
 * Mon Feb 08 2010 Gavin Carr <gavin@openfusion.com.au> 0.7.1
 - Fix typo in htset.
