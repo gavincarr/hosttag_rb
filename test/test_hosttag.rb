@@ -5,6 +5,7 @@ require 'ftools'
 
 class TestHosttag < Test::Unit::TestCase
 
+  # format: args (string) => expected (either string or regex)
   TESTS = [
     [ 'centos',                 'a m n' ],
     [ 'laptop',                 'n' ],
@@ -46,11 +47,11 @@ class TestHosttag < Test::Unit::TestCase
     `#{bindir}/htdump #{test_args}`
 
     TESTS.each do |args, expected|
-      got = `#{bindir}/hosttag #{test_args} #{args}`.chomp
+      got = `#{bindir}/hosttag #{test_args} #{args} 2>&1`.chomp
       if expected.is_a?(String)
-        assert_equal(expected, got)
+        assert_equal(expected, got, "args: #{args}")
       elsif expected.is_a?(Regexp)
-        assert_match(expected, got)
+        assert_match(expected, got, "args: #{args}")
       end
     end
   end

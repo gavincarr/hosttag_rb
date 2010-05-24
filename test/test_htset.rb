@@ -81,11 +81,11 @@ class TestHtset < Test::Unit::TestCase
       bin=op.shift()
       `#{bindir}/#{bin} #{test_args} #{op.join(' ')}`
       got=`#{bindir}/ht #{test_args} -A`.chomp
-      assert_equal(hosts1.sort.join(' '), got)
+      assert_equal(hosts1.sort.join(' '), got, '-A')
       got=`#{bindir}/ht #{test_args} -A -A`.chomp
-      assert_equal(hosts2.sort.join(' '), got)
+      assert_equal(hosts2.sort.join(' '), got, '-A -A')
       got=`#{bindir}/ht #{test_args} -T`.chomp
-      assert_equal(tags1.sort.join(' '), got)
+      assert_equal(tags1.sort.join(' '), got, '-T')
     end
   end
 end
