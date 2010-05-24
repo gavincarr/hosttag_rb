@@ -105,7 +105,7 @@ def deep_invert(hash)
 end
 
 def redis_delete_hosttag_keys(r)
-  r.keys(r.get_key("*")).each { |k| r.del(k) }
+  r.keys(r.get_key("*")).split(%r{ }).each { |k| r.del(k) }
 end
 
 def write_hash_to_redis(r, type, tag_hash, options)
