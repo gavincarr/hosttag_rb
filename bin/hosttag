@@ -120,7 +120,7 @@ def lookup_keys(r, args, arg_type, rel, options)
   # Check all keys exist
   keys.each do |k| 
     if not r.exists(k) 
-      item = k.sub(%r{^.*/}, '')
+      item = k.sub(%r{^.*:}, '')
       raise "Error: #{arg_type} '#{item}' not found." 
     end
   end
