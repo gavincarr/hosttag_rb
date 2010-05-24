@@ -35,14 +35,20 @@ def parse_options(me)
   opts.on('-A', '--all', '(htdel) Delete all tags from hosts') do
     options[:all] = 1
   end
+  opts.on('-H', '--host', '--hosts', 'Treat unrecognised elements as hosts') do
+    options[:host_mode] = 1
+  end
+  opts.on('-T', '--tag', '--tags', 'Treat unrecognised elements as tags') do
+    options[:tag_mode] = 1
+  end
+  opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
+    options[:namespace] = val
+  end
   opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to') do |val|
     options[:server] = val
   end
   opts.on('-p=ARG', '--port=ARG', Integer, 'Server port to connect to') do |val|
     options[:port] = val
-  end
-  opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
-    options[:namespace] = val
   end
   opts.on('-v', '--verbose', 'Verbose output') do
     options[:verbose] = true
@@ -62,6 +68,10 @@ def parse_options(me)
     warn "Error: --all not available with htset"
     die(opts)
   end 
+  if options[:host_mode] and options[:tag_mode]
+    warn "Error: --host and --tag options are mutually exclusive"
+    die(opts)
+  end
 
   return options, args
 end
@@ -201,8 +211,15 @@ if (options[:all] == 0)
   end
 
   if results[:uncertain].length > 0
-    # TODO: do something useful here - ask the user?
-    die("Error: can't auto-classify '#{results[:uncertain].join(',')}' - aborting")
+    # --hosts: treat unknown elements as hosts
+    if options[:host_mode]
+      results[:host].push(*results[:uncertain])
+    elsif options[:tag_mode]
+      results[:tag].push(*results[:uncertain])
+    else
+      # TODO: do something useful here - ask the user?
+      die("Error: can't auto-classify '#{results[:uncertain].join(',')}' - aborting")
+    end
   end
 
   adjust_hosttags(r, results[:host], results[:tag], mode, options[:verbose]);
