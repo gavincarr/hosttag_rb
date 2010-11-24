@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.8.1
+Version: 0.9
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -10,7 +10,7 @@ License: GPL
 Group: Applications/System
 BuildRoot: %{_tmppath}/%{name}-%{version}
 BuildArch: noarch
-Requires: rubygems, rubygem-redis
+Requires: rubygems, rubygem-redis >= 2.0.0
 
 %description
 Hosttag is a client/server system for tagging hosts into groups or classes.
@@ -77,6 +77,11 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Mon May 24 2010 Gavin Carr <gavin@openfusion.com.au> 0.9
+- Migrate redis api calls over to redis 2.0.0 gem.
+- Add --all option to htdel, for deleting all tags from a host.
+- Add --host and --tag option to htset for ambiguous elements.
+
 * Fri Feb 12 2010 Gavin Carr <gavin@openfusion.com.au> 0.8.1
 - Add a -1 argument to hosttag to list results one per line.
 
