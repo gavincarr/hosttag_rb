@@ -61,6 +61,9 @@ opts.on('-1', 'List one item per line') do
   options[:one] = 1
   options[:join] = "\n"
 end
+opts.on('-d', '--delimiter=STR', String, 'Delimiter for reporting (default " ")') do |val|
+  options[:join] = val
+end
 opts.on('-s=ARG', '--server=ARG', String, 'Server hostname to connect to. Default: hosttag') do |val|
   options[:server] = val
 end
