@@ -1,0 +1,4 @@
+- ht -l -A doesn't work as expected
+- ht -l -T doesn't work as expected
+- it would be nice to able to do 'ht -x usd001 na', 'ht -X ignore_file na', 'ht -x usd001 -A'
+- it would also be nice to able to do 'ht -n dell -n supermicro -A', 'ht -n dell server', 'ht -N not_file -A', 'ht -N not_file server'
