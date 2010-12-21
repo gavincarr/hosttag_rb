@@ -96,6 +96,87 @@ module Hosttag
     return r.smembers(key).sort
   end
 
+  def hosttag_add_tags(hosts, tags, options)
+    r = hosttag_server(options)
+
+    # Add tags to each host
+    hosts.each do |host|
+      key = r.get_key('host', host)
+      tags.each { |tag| r.sadd(key, tag) }
+      skip_host = r.sismember(key, 'SKIP')
+
+      # Add to all_hosts sets
+      all_hosts = r.get_key('all_hosts')
+      all_hosts_noskip = r.get_key('all_hosts_noskip')
+      r.sadd(all_hosts, host)
+      if skip_host
+        r.srem(all_hosts_noskip, host)
+      else
+        r.sadd(all_hosts_noskip, host)
+       end
+    end
+
+    # Add hosts to each tag
+    tags.each do |tag|
+      key = r.get_key('tag', tag)
+      hosts.each { |host| r.sadd(key, host) }
+
+      # Add to all_tags sets
+      all_tags = r.get_key('all_tags')
+      all_tags_noskip = r.get_key('all_tags_noskip')
+      r.sadd(all_tags, tag)
+      r.sadd(all_tags_noskip, tag) if tag != 'SKIP'
+    end
+  end
+
+  def hosttag_delete_tags(hosts, tags, options)
+    r = hosttag_server(options)
+
+    # Delete tags from each host
+    hosts.each do |host|
+      key = r.get_key('host', host)
+      tags.each { |tag| r.srem(key, tag) }
+      r.del(key) if r.scard(key) == 0
+      skip_host = r.sismember(key, 'SKIP')
+
+      # Delete from all_hosts sets
+      all_hosts = r.get_key('all_hosts')
+      all_hosts_noskip = r.get_key('all_hosts_noskip')
+      if (r.smembers(key).length > 0)
+        r.sadd(all_hosts, host)
+      else
+        r.srem(all_hosts, host)
+      end
+      if (r.smembers(key).length > 0 and not skip_host)
+        r.sadd(all_hosts_noskip, host)
+      else
+        r.srem(all_hosts_noskip, host)
+      end
+    end
+
+    # Delete hosts from each tag
+    tags.each do |tag|
+      key = r.get_key('tag', tag)
+      hosts.each { |host| r.srem(key, host) }
+      r.del(key) if r.scard(key) == 0
+
+      # Delete from all_tags sets
+      all_tags = r.get_key('all_tags')
+      all_tags_noskip = r.get_key('all_tags_noskip')
+      if (r.smembers(key).length > 0)
+        r.sadd(all_tags, tag)
+      else
+        r.srem(all_tags, tag)
+      end
+      if (r.smembers(key).length > 0 and tag != 'SKIP')
+        r.sadd(all_tags_noskip, tag)
+      else
+        r.srem(all_tags_noskip, tag)
+      end
+    end
+
+  end
+
   private
 
   def lookup(*args)
