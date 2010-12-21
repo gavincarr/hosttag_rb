@@ -84,7 +84,11 @@ class TestHtset < Test::Unit::TestCase
     TESTS.each do |op, hosts1, hosts2, tags1|
       cmd = op.join(' ')
       bin = op.shift()
-      `#{@bindir}/#{bin} #{@test_args} #{op.join(' ')}`
+      if bin == 'htset'
+        hosttag_add_tags([ op[0] ], [ op[1] ], @test_opts)
+      else
+        hosttag_delete_tags([ op[0] ], [ op[1] ], @test_opts)
+      end
 
       # Check results
       assert_equal(hosts1, hosttag_all_hosts(@test_opts), "all_hosts, #{cmd}")
