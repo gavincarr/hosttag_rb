@@ -35,12 +35,6 @@ class TestHosttag < Test::Unit::TestCase
     [ %w{a n m},            { :rel => :and },   %w{centos} ],
   ]
 
-    # Invalid data
-#   [ 'foo',                    %r{ \btag\b  .* not\sfound }x ],
-#   [ 'centos foo',             %r{ \btag\b  .* not\sfound }x ],
-#   [ '-t foo',                 %r{ \bhost\b .* not\sfound }x ],
-#   [ '-t n foo',               %r{ \bhost\b .* not\sfound }x ],
-
   def test_hosttag_lookup
     TAGSET.each do |args, opts, expected|
       opts.merge!(@test_opts)
@@ -96,5 +90,29 @@ class TestHosttag < Test::Unit::TestCase
     end
   end
 
+    # Invalid data
+  INVALID_TAGS = [
+    [ %w{foo},                  %r{ \btag\b  .* not\sfound }x ],
+    [ %w{centos foo},           %r{ \btag\b  .* not\sfound }x ],
+  ]
+  INVALID_HOSTS = [
+    [ %w{foo},                  %r{ \bhost\b .* not\sfound }x ],
+    [ %w{n foo},                %r{ \bhost\b .* not\sfound }x ],
+  ]
+
+  def test_invalid_data
+    INVALID_TAGS.each do |args, expected|
+      exception = assert_raise RuntimeError do
+        hosttag_lookup_tags(args)
+      end
+      assert_match expected, exception.message, "args: #{args}"
+    end
+    INVALID_HOSTS.each do |args, expected|
+      exception = assert_raise RuntimeError do
+        hosttag_lookup_hosts(args)
+      end
+      assert_match expected, exception.message, "args: #{args}"
+    end
+  end
 end
 
