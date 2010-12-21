@@ -142,12 +142,12 @@ module Hosttag
       # Delete from all_hosts sets
       all_hosts = r.get_key('all_hosts')
       all_hosts_noskip = r.get_key('all_hosts_noskip')
-      if (r.smembers(key).length > 0)
+      if (r.scard(key) > 0)
         r.sadd(all_hosts, host)
       else
         r.srem(all_hosts, host)
       end
-      if (r.smembers(key).length > 0 and not skip_host)
+      if (r.scard(key) > 0 and not skip_host)
         r.sadd(all_hosts_noskip, host)
       else
         r.srem(all_hosts_noskip, host)
@@ -163,12 +163,12 @@ module Hosttag
       # Delete from all_tags sets
       all_tags = r.get_key('all_tags')
       all_tags_noskip = r.get_key('all_tags_noskip')
-      if (r.smembers(key).length > 0)
+      if (r.scard(key) > 0)
         r.sadd(all_tags, tag)
       else
         r.srem(all_tags, tag)
       end
-      if (r.smembers(key).length > 0 and tag != 'SKIP')
+      if (r.scard(key) > 0 and tag != 'SKIP')
         r.sadd(all_tags_noskip, tag)
       else
         r.srem(all_tags_noskip, tag)
@@ -209,11 +209,11 @@ module Hosttag
     
     # Lookup and return
     if keys.length == 1
-      r.smembers( keys ).sort
+      r.smembers(keys).sort
     elsif rel == :and
-      r.sinter( *keys ).sort
+      r.sinter(*keys).sort
     else
-      r.sunion( *keys ).sort
+      r.sunion(*keys).sort
     end
   end
 
