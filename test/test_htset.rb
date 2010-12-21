@@ -3,6 +3,9 @@
 require 'test/unit'
 require 'ftools'
 
+require 'hosttag'
+include Hosttag
+
 class TestHtset < Test::Unit::TestCase
 
   TESTS = [
@@ -68,24 +71,26 @@ class TestHtset < Test::Unit::TestCase
     ],
   ]
 
-  def test_htset
-    test_args = '--server localhost --ns hosttag_testing'
-
-    # Setup
+  def setup
+    @test_args = '--server localhost --ns hosttag_testing'
+    @test_opts = { :server => 'localhost', :namespace => 'hosttag_testing', :debug => false }
     datadir = "#{File.dirname(__FILE__)}/data_reset"
-    bindir = File.join(File.dirname(__FILE__), '..', 'bin')
+    @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{bindir}/htimport #{test_args} --delete --datadir #{datadir}`
+    `#{@bindir}/htimport #{@test_args} --delete --datadir #{datadir}`
+  end
 
+  def test_htset
     TESTS.each do |op, hosts1, hosts2, tags1|
-      bin=op.shift()
-      `#{bindir}/#{bin} #{test_args} #{op.join(' ')}`
-      got=`#{bindir}/ht #{test_args} -A`.chomp
-      assert_equal(hosts1.sort.join(' '), got, '-A')
-      got=`#{bindir}/ht #{test_args} -A -A`.chomp
-      assert_equal(hosts2.sort.join(' '), got, '-A -A')
-      got=`#{bindir}/ht #{test_args} -T`.chomp
-      assert_equal(tags1.sort.join(' '), got, '-T')
+      cmd = op.join(' ')
+      bin = op.shift()
+      `#{@bindir}/#{bin} #{@test_args} #{op.join(' ')}`
+
+      # Check results
+      assert_equal(hosts1, hosttag_all_hosts(@test_opts), "all_hosts, #{cmd}")
+      assert_equal(hosts2, hosttag_all_hosts(@test_opts.merge({ :include_skip? => true })), 
+        "all_hosts include_skip, #{cmd}")
+      assert_equal(tags1, hosttag_all_tags(@test_opts),  "all_tags, #{cmd}")
     end
   end
 end
