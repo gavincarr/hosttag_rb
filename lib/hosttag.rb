@@ -73,11 +73,12 @@ module Hosttag
   # Return an array of all tags
   # The final argument may be an options hash, which accepts the following 
   # keys:
-  # - :include_skip? - flag indicating whether to include hosts that have
-  #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
+  # - :include_skip? - flag indicating whether to include the SKIP tag.
+  #   Default: false. Included for completeness.
   def hosttag_all_tags(options)
-    key = r.get_key(:tag)
-    key += "_noskip" if options[:include_skip?]
+    r = hosttag_server(options)
+    key = r.get_key('all_tags')
+    key += "_noskip" unless options[:include_skip?]
     $stderr.puts "+ key: #{key}" if options[:debug]
     return r.smembers(key).sort
   end
@@ -88,8 +89,9 @@ module Hosttag
   # - :include_skip? - flag indicating whether to include hosts that have
   #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
   def hosttag_all_hosts(options)
-    key = r.get_key(:host)
-    key += "_noskip" if options[:include_skip?]
+    r = hosttag_server(options)
+    key = r.get_key('all_hosts')
+    key += "_noskip" unless options[:include_skip?]
     $stderr.puts "+ key: #{key}" if options[:debug]
     return r.smembers(key).sort
   end
