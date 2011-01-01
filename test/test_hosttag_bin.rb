@@ -4,6 +4,13 @@ require 'test/unit'
 require 'ftools'
 
 class TestHosttag < Test::Unit::TestCase
+  def setup
+    @test_args = '--server localhost --ns hosttag_testing'
+    @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
+    datadir = "#{File.dirname(__FILE__)}/data_hosttag"
+    File.directory?(datadir) or throw "missing datadir #{datadir}"
+    `#{@bindir}/htimport #{@test_args} --delete --datadir #{datadir}`
+  end
 
   # format: args (string) => expected (either string or regex)
   TESTS = [
@@ -22,10 +29,17 @@ class TestHosttag < Test::Unit::TestCase
     [ '-ta a n',                'centos centos5' ],
     [ '-t -a a n',              'centos centos5' ],
     [ '-t -a a n m',            'centos' ],
+    [ '-1 centos',              "a\nm\nn" ],
+    [ '-o -1 laptop vps',       "m\nn" ],
+    # List mode
+    [ '-l centos5',             'centos5: a n' ],
     # All cases
     [ '-A',                     'a m n' ],
     [ '-A -A',                  'a g h m n' ],
     [ '-T',                     'centos centos4 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps' ],
+    [ '-A -1',                  "a\nm\nn" ],
+    [ '-A -1 -A',               "a\ng\nh\nm\nn" ],
+    [ '-1 -T',                  "centos\ncentos4\ncentos4-x86_64\ncentos5\ncentos5-i386\ncentos5-x86_64\nlaptop\npublic\nvps" ],
     # Try unrecognised tags as hosts
     [ 'n',                      'centos centos5 centos5-i386 laptop' ],
     [ 'a n',                    'centos centos5 centos5-i386 centos5-x86_64 laptop public' ],
@@ -37,17 +51,8 @@ class TestHosttag < Test::Unit::TestCase
   ]
 
   def test_hosttag
-    test_args = '--server localhost --ns hosttag_testing'
-
-    # Setup
-    datadir = "#{File.dirname(__FILE__)}/data_hosttag"
-    bindir = File.join(File.dirname(__FILE__), '..', 'bin')
-    File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{bindir}/htimport #{test_args} --delete --datadir #{datadir}`
-    `#{bindir}/htdump #{test_args}`
-
     TESTS.each do |args, expected|
-      got = `#{bindir}/hosttag #{test_args} #{args} 2>&1`.chomp
+      got = `#{@bindir}/hosttag #{@test_args} #{args} 2>&1`.chomp
       if expected.is_a?(String)
         assert_equal(expected, got, "args: #{args}")
       elsif expected.is_a?(Regexp)
