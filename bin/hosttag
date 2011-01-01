@@ -1,17 +1,17 @@
 #!/usr/bin/ruby
 #
-# Hosttag query client, redis version
+# hosttag query client
 #
 # Usage:
 #   ht <tag>
 #
 #   ht [-a] <tag1> <tag2>           Show hosts with tag1 AND tag2 (intersection, default)
-#   ht -o <tag1> <tag2>             Show hosts with tag1 OR tags2 (union)
+#   ht -o <tag1> <tag2>             Show hosts with tag1 OR  tag2 (union)
 #
 #   ht -A                           Show all hosts
 #
 #   ht -t <host>                    Show tags on 'host'
-#   ht -t [-o] <host1> <host2>      Show tags on 'host' OR 'host2' (union, default)
+#   ht -t [-o] <host1> <host2>      Show tags on 'host' OR  'host2' (union, default)
 #   ht -t -a <host1> <host2>        Show tags on 'host' AND 'host2' (intersection)
 #
 #   ht -T                           Show all tags
@@ -20,17 +20,39 @@
 require 'optparse'
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
-require 'hosttag/server'
+require 'hosttag'
+include Hosttag
+
+# -------------------------------------------------------------------------
+# Functions
 
 def die(error)
   warn error
   exit 1
 end
 
-options = { 
-  :arg_type => 'tag', :all => 0, :all_key => 'all_hosts', :join => ' ',
-}
-arg_type_invert = { 'tag' => 'host', 'host' => 'tag' }
+def usage(opts, msg = nil)
+  if msg
+    warn msg
+    $stderr.puts
+  end
+  warn opts
+  exit
+end
+
+def render(result, options, arg = nil)
+  # Report
+  if options[:list]
+    puts "#{arg}: #{result.sort.join(' ')}"
+  else
+    puts result.sort.join(options[:join])
+  end
+end
+
+# -------------------------------------------------------------------------
+# Main
+
+options = { :join => ' ' }
 
 opts = OptionParser.new
 opts.banner = "Usage: hosttag [options] <tag> [<tag2>...]"
@@ -39,23 +61,34 @@ opts.on('-?', '-h', '--help') do
   exit
 end
 opts.on('-a', '--and', 'Report hosts with ALL the given tags (AND result sets)') do
-  options[:rel] = 'and'
+  options[:rel] = :and
 end
 opts.on('-o', '--or',  'Report hosts with ANY of the given tags (OR result sets)') do
-  options[:rel] = 'or'
+  options[:rel] = :or
 end
-opts.on('-l', '--list', "List tags individually against each host") do
+opts.on('-l', '--list', "List hosts/tags separately for each tag/host") do
   options[:list] = 1
 end
 opts.on('-t', '--tag', '--tags', "Tag mode: report tags for the given hosts") do
-  options[:arg_type] = 'host'
+  options[:type] = :host
 end
 opts.on('-A', '--all', 'Report all hosts') do
-  options[:all] += 1
+  if not options[:all]
+    options[:all] = :hosts
+  elsif options[:all] == :hosts
+    options[:include_skip?] ||= true
+  else
+    usage(opts, "Error: can't specify both -A/--all-hosts and -T/--all-tags")
+  end
 end
 opts.on('-T', '--all-tags', 'Report all tags') do
-  options[:all] += 1
-  options[:all_key] = 'all_tags'
+  if not options[:all]
+    options[:all] = :tags
+  elsif options[:all] == :tags
+    options[:include_skip?] ||= true
+  else
+    usage(opts, "Error: can't specify both -A/--all-hosts and -T/--all-tags")
+  end
 end
 opts.on('-1', 'List one item per line') do
   options[:one] = 1
@@ -76,70 +109,43 @@ end
 opts.on('-v', '--verbose', 'Verbose output') do
   options[:verbose] = true
 end
-def usage(opts)
-  puts opts
-  exit
-end
 
 # Parse options
 begin
   args = opts.parse(ARGV) 
 rescue => e
-  puts "Error: " << e
-  usage(opts)
+  usage(opts, "Error: " << e)
 end
-if args.length == 0 and options[:all] == 0
+
+# Sanity checks
+if args.length == 0 and not options[:all]
   usage(opts) 
 end
-if args.length > 0 and options[:all] > 0
-  if options[:all_key] == 'all_tags'
-    puts "Error: can't specify tags with -T/--all-tags"
+if args.length > 0 and options[:all]
+  if options[:all] == :hosts
+    error = "Error: can't specify hosts with -A/--all-hosts"
   else
-    puts "Error: can't specify hosts with -A/--all-hosts"
+    error = "Error: can't specify tags with -T/--all-tags"
   end
-  usage(opts) 
+  usage(opts, error) 
 end
-if options[:one] and options[:list]
-  warn "Warning: -l/--list mode doesn't support -1 - ignoring"
+if options[:list] and options[:one]
+  usage(opts, "Warning: -L/--list and -1 are incompatible")
+end 
+if options[:list] and options[:all]
+  usage(opts, "Warning: -L/--list and -A/--all-hosts/-T/--all-tags are incompatible")
 end 
 
-begin
-  r = Hosttag::Server.new(options)
-rescue Resolv::ResolvError => e
-  die e
-end
-
-def lookup_keys(r, args, arg_type, rel, options)
-  # Default a rel if we have multiple args
-  if args.length > 1 and not rel
-    rel = arg_type == 'tag' ? 'and' : 'or'
-  end
-  puts "+ rel (#{arg_type}): #{rel}" if options[:verbose]
-
-  # Map keys to fetch
-  keys = args.collect {|v| r.get_key(arg_type, v) }
-  puts "+ keys: #{keys.join(' ')}" if options[:verbose]
-
-  # Check all keys exist
-  keys.each do |k| 
-    if not r.exists(k) 
-      item = k.sub(%r{^.*:}, '')
-      raise "Error: #{arg_type} '#{item}' not found." 
-    end
-  end
-  
-  # Lookup and return
-  if keys.length == 1
-    r.smembers( keys )
-  elsif rel == 'and'
-    r.sinter( *keys )
+# All request
+if options[:all]
+  if options[:all] == :hosts
+    render hosttag_all_hosts(options), options
   else
-    r.sunion( *keys )
+    render hosttag_all_tags(options), options
   end
-end
 
 # Standard request
-if options[:all] == 0
+else
   # In list mode, process all args separately; otherwise, do them all at once
   if options[:list]
     arg_list = args
@@ -149,33 +155,11 @@ if options[:all] == 0
 
   arg_list.each do |a|
     begin
-      result = lookup_keys(r, a, options[:arg_type], options[:rel], options);
-    rescue
-      die $! unless options[:arg_type] == 'tag'
-      # If default lookups failed as a tag, try again as a host
-      error1 = $!
-      begin
-        result = lookup_keys(r, a, arg_type_invert[options[:arg_type]], options[:rel], options)
-      rescue
-        # Failed a second time - rethrow original error
-        die error1
-      end
-    end
-
-    # Report
-    if options[:list]
-#     printf("%-20s %s\n", "#{a}:", result.sort.join(' '))
-      puts "#{a}: #{result.sort.join(' ')}"
-    else
-      puts result.sort.join(options[:join])
+      results = hosttag_lookup(a, options)
+      render results, options, a
+    rescue => e
+      warn e
     end
   end
-
-# All request
-else
-  key = r.get_key(options[:all_key])
-  key += "_noskip" if options[:all] == 1
-  puts "+ key: #{key}" if options[:verbose]
-  puts r.smembers(key).sort.join(options[:join]);
 end
 
