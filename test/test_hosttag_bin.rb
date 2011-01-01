@@ -3,7 +3,7 @@
 require 'test/unit'
 require 'ftools'
 
-class TestHosttag < Test::Unit::TestCase
+class TestHosttagBin < Test::Unit::TestCase
   def setup
     @test_args = '--server localhost --ns hosttag_testing'
     @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
