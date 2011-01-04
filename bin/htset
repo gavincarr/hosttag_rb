@@ -94,9 +94,9 @@ def classify_args(args, options)
     begin
       tags = hosttag_lookup_hosts(a, options)
       if tags.length > 0
-        # if 'a' is a valid host, then everything before 'a' must be too
+        # if 'a' is a valid host, then everything already in uncertain must be too
         if results[:uncertain].length > 0
-          results[:uncertain].each { |u| results[:host].push(u) }
+          results[:host].push(*results[:uncertain])
           results[:uncertain] = []
         end
         results[:host].push(a)
@@ -106,9 +106,9 @@ def classify_args(args, options)
       begin
         hosts = hosttag_lookup_tags(a, options)
         if hosts.length > 0
-          results[:tag].push(a)
-          # If 'a' is a valid tag, then everything after 'a' must be too
-          args.each { |a| results[:tag].push(a) }
+          # If 'a' is a valid tag, then everything else in args must be too
+          results[:tag].push(a, *args)
+          args = []
         end
       rescue
         # 'a' is not a known host or tag, add to uncertain list
