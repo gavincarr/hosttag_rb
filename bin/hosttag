@@ -24,7 +24,7 @@ require 'hosttag'
 include Hosttag
 
 # -------------------------------------------------------------------------
-# Functions
+# Subroutines
 
 def die(error)
   warn error

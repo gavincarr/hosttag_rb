@@ -11,7 +11,8 @@ require 'ftools'
 require 'pp'
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
-require 'hosttag/server'
+require 'hosttag'
+include Hosttag
 
 # ------------------------------------------------------------------------------
 # Subroutines
@@ -77,41 +78,39 @@ def parse_options(me)
 end
 
 # Classify args into hosts, tags, and uncertain buckets
-def classify_args(r, args, options)
+def classify_args(args, options)
   results = { :host => [], :tag => [], :uncertain => [] }
-  arg_type = 'host'
   verbose = options[:verbose]
 
   # First arg must be host, and last tag, by definition
   results[:host].push(args.shift)
   last_tag = args.pop
 
-  # Classify remainder by checking for existence in redis
-  while a = args.shift
-    if r.exists(r.get_key(arg_type, a))
-      if arg_type == 'host'
+  # Classify remainder by doing lookups
+  while a = args.shift do
+    begin
+      tags = hosttag_lookup_hosts(a, options)
+      if tags.length > 0
         # if 'a' is a valid host, then everything before 'a' must be too
         if results[:uncertain].length > 0
           results[:uncertain].each { |u| results[:host].push(u) }
           results[:uncertain] = []
         end
         results[:host].push(a)
-      else
-        results[:tag].push(a)
-        # If 'a' is a valid tag, then everything after 'a' must be too
-        args.each { |a| results[:tag].push(a) }
-        break
       end
-
-    elsif arg_type == 'host'
-      # Not a host, see if it's a tag
-      arg_type = 'tag'
-      redo
-
-    elsif arg_type == 'tag'
-      # Not a host or a tag, add to uncertain list
-      arg_type = 'host'
-      results[:uncertain].push(a)
+    rescue
+      # 'a' is not a known host, check if a tag
+      begin
+        hosts = hosttag_lookup_tags(a, options)
+        if hosts.length > 0
+          results[:tag].push(a)
+          # If 'a' is a valid tag, then everything after 'a' must be too
+          args.each { |a| results[:tag].push(a) }
+        end
+      rescue
+        # 'a' is not a known host or tag, add to uncertain list
+        results[:uncertain].push(a)
+      end
     end
   end
 
@@ -120,74 +119,17 @@ def classify_args(r, args, options)
   return results
 end
 
-def adjust_hosttags(r, hosts, tags, mode, verbose)
-  # Add tags to each host
+def delete_all_tags_for_hosts(hosts, options)
   hosts.each do |host|
-    key = r.get_key('host', host)
-    tags.each do |tag| 
-      if (mode != 'htdel')
-        r.sadd(key, tag) 
-      else
-        r.srem(key, tag) 
-      end
-    end
-    skip_host = r.sismember(key, 'SKIP')
-    r.del(key) if mode == 'htdel' and r.scard(key) == 0
-
-    # Add/delete to/from all_hosts sets
-    all_hosts = r.get_key('all_hosts')
-    all_hosts_noskip = r.get_key('all_hosts_noskip')
-    if (r.smembers(key).length > 0)
-      r.sadd(all_hosts, host)
-    else
-      r.srem(all_hosts, host)
-    end
-    if (r.smembers(key).length > 0 and not skip_host)
-      r.sadd(all_hosts_noskip, host)
-    else
-      r.srem(all_hosts_noskip, host)
-    end
-  end
-
-  # Add/delete hosts to/from each tag
-  tags.each do |tag|
-    key = r.get_key('tag', tag)
-    hosts.each do |host| 
-      if (mode != 'htdel')
-        r.sadd(key, host) 
-      else
-        r.srem(key, host) 
-      end
-    end
-    r.del(key) if mode == 'htdel' and r.scard(key) == 0
-
-    # Add/delete to/from all_tags sets
-    all_tags = r.get_key('all_tags')
-    all_tags_noskip = r.get_key('all_tags_noskip')
-    if (r.smembers(key).length > 0) 
-      r.sadd(all_tags, tag)
-    else
-      r.srem(all_tags, tag)
-    end
-    if (r.smembers(key).length > 0 and tag != 'SKIP') 
-      r.sadd(all_tags_noskip, tag)
-    else
-      r.srem(all_tags_noskip, tag)
-    end
-  end
-end
-
-def delete_all_tags_for_hosts(r, args, options)
-  args.each do |host|
-    key = r.get_key('host', host)
-    if r.exists(key)
+    begin
+      tags = hosttag_lookup_hosts(host, options)
       print "Delete all tags on host '#{host}'? [yN] "
       $stdout.flush
       confirm = $stdin.gets.chomp
       if confirm =~ %r{^y}i
-        adjust_hosttags(r, [ host ], r.smembers(key), 'htdel', options[:verbose])
+        hosttag_delete_tags([ host ], tags, options)
       end
-    else
+    rescue
       warn "Warning: invalid host '#{host}' - cannot delete"
     end
   end
@@ -200,11 +142,9 @@ mode = $0.sub(/^.*\//, '')
 
 options, args = parse_options(mode)
 
-r = Hosttag::Server.new(options)
-
 # Normal mode
 if (options[:all] == 0)
-  results = classify_args(r, args, options)
+  results = classify_args(args, options)
   if options[:verbose] 
     print "+ results: "
     pp results 
@@ -222,11 +162,15 @@ if (options[:all] == 0)
     end
   end
 
-  adjust_hosttags(r, results[:host], results[:tag], mode, options[:verbose]);
+  if (mode == 'htdel') 
+    hosttag_delete_tags(results[:host], results[:tag], options)
+  else
+    hosttag_add_tags(results[:host], results[:tag], options)
+  end
 
 # htdel --all mode
 else
-  delete_all_tags_for_hosts(r, args, options)
+  delete_all_tags_for_hosts(args, options)
 
 end
 
