@@ -101,6 +101,7 @@ module Hosttag
     return r.smembers(key).sort
   end
 
+  # Add the given tags to all the given hosts
   def hosttag_add_tags(hosts, tags, options)
     r = hosttag_server(options)
 
@@ -134,6 +135,7 @@ module Hosttag
     end
   end
 
+  # Delete the given tags from all the given hosts
   def hosttag_delete_tags(hosts, tags, options)
     r = hosttag_server(options)
 
@@ -180,6 +182,25 @@ module Hosttag
       end
     end
 
+  end
+
+  # Delete all tags from the given hosts
+  def hosttag_delete_all_tags(hosts, options)
+    hosts.each do |host|
+      begin
+        tags = hosttag_lookup_hosts(host, options)
+        if not options[:autoconfirm]
+          print "Delete all tags on host '#{host}'? [yN] "
+          $stdout.flush
+          confirm = $stdin.gets.chomp
+        end
+        if options[:autoconfirm] or confirm =~ %r{^y}i
+          hosttag_delete_tags([ host ], tags, options)
+        end
+      rescue
+        warn "Warning: invalid host '#{host}' - cannot delete"
+      end
+    end
   end
 
   private

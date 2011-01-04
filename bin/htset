@@ -36,6 +36,9 @@ def parse_options(me)
   opts.on('-A', '--all', '(htdel) Delete all tags from hosts') do
     options[:all] = 1
   end
+  opts.on('-y', '--autoconfirm', "(htdel) Don't ask for confirmation on delete all operations") do
+    options[:autoconfirm] = 1
+  end
   opts.on('-H', '--host', '--hosts', 'Treat unrecognised elements as hosts') do
     options[:host_mode] = 1
   end
@@ -119,22 +122,6 @@ def classify_args(args, options)
   return results
 end
 
-def delete_all_tags_for_hosts(hosts, options)
-  hosts.each do |host|
-    begin
-      tags = hosttag_lookup_hosts(host, options)
-      print "Delete all tags on host '#{host}'? [yN] "
-      $stdout.flush
-      confirm = $stdin.gets.chomp
-      if confirm =~ %r{^y}i
-        hosttag_delete_tags([ host ], tags, options)
-      end
-    rescue
-      warn "Warning: invalid host '#{host}' - cannot delete"
-    end
-  end
-end
-
 # ------------------------------------------------------------------------------
 # Main
 
@@ -170,7 +157,7 @@ if (options[:all] == 0)
 
 # htdel --all mode
 else
-  delete_all_tags_for_hosts(args, options)
+  hosttag_delete_all_tags(args, options)
 
 end
 
