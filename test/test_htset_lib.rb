@@ -85,7 +85,7 @@ class TestHtsetLib < Test::Unit::TestCase
   ]
 
   def test_hosttag_add_delete_tags
-    TESTS.each do |op, hosts1, hosts2, tags1|
+    TESTS.each do |op, all_hosts, all_hosts2, all_tags|
       cmd = op.join(' ')
       bin = op.shift()
       if bin == 'htset'
@@ -95,10 +95,10 @@ class TestHtsetLib < Test::Unit::TestCase
       end
 
       # Check results
-      assert_equal(hosts1, hosttag_all_hosts(@test_opts), "all_hosts, #{cmd}")
-      assert_equal(hosts2, hosttag_all_hosts(@test_opts.merge({ :include_skip? => true })), 
+      assert_equal(all_hosts, hosttag_all_hosts(@test_opts), "all_hosts, #{cmd}")
+      assert_equal(all_hosts2, hosttag_all_hosts(@test_opts.merge({ :include_skip? => true })), 
         "all_hosts include_skip, #{cmd}")
-      assert_equal(tags1, hosttag_all_tags(@test_opts),  "all_tags, #{cmd}")
+      assert_equal(all_tags, hosttag_all_tags(@test_opts),  "all_tags, #{cmd}")
     end
   end
 
