@@ -184,7 +184,11 @@ module Hosttag
 
   end
 
-  # Delete all tags from the given hosts
+  # Delete all tags from the given hosts. Interactively confirms the deletion
+  # for each host, unless the :autoconfirm option is set.
+  # The final argument may be an options hash, which accepts the following 
+  # keys:
+  # :autoconfirm - if true, don't interactively confirm deletions
   def hosttag_delete_all_tags(hosts, options)
     hosts.each do |host|
       begin
@@ -209,11 +213,11 @@ module Hosttag
     options = args.last.is_a?(Hash) ? args.pop : {}
     args.flatten!
 
-    type            = options[:type] 
+    type = options[:type] 
     throw "Required option 'type' missing" if not type
-    rel             = options[:rel]
+    rel = options[:rel]
 
-    r               = hosttag_server(options)
+    r = hosttag_server(options)
 
     # Default a rel if we have multiple args
     if args.length > 1 and not rel
