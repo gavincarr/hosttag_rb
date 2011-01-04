@@ -46,13 +46,7 @@ class TestHtsetBin < Test::Unit::TestCase
       [ 'centos', 'centos4', 'centos5' ],
     ],
     [ 
-      [ 'htdel', 'bar', 'centos4' ],
-      [ 'bar', 'foo' ],
-      [ 'bar', 'foo' ],
-      [ 'centos', 'centos5' ],
-    ],
-    [ 
-      [ 'htdel', 'bar', 'centos' ],
+      [ 'htdel', '-A', '-y', 'bar' ],
       [ 'foo' ],
       [ 'foo' ],
       [ 'centos', 'centos5' ],
