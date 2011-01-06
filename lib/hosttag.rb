@@ -207,6 +207,30 @@ module Hosttag
     end
   end
 
+  # Import hosts and tags from the given directory. The directory is
+  # expected to contain a set of directories, representing hosts; each
+  # file within those directories is treated as a tag that applies to
+  # that host.
+  # Options is a hash which accepts the following keys:
+  # - :delete - if true, delete ALL hosts and tags from the datastore
+  #   before doing the import.
+  # - :autoconfirm - if true, don't interactively confirm deletions
+  def hosttag_import_from_directory(datadir, options)
+    # Delete ALL hosts and tags from the datastore if options[:delete] set
+    if options[:delete]
+      hosts_all = hosttag_all_hosts(options.merge({ :include_skip? => true }))
+      hosttag_delete_all_tags(hosts_all, options)
+    end
+
+    # Load directory into a { host => [ taglist ] } hash
+    host_tag_hash = load_directory(datadir, options)
+
+    # Add all hosts and tags
+    host_tag_hash.each do |host, tags|
+      hosttag_add_tags([ host ], tags, options)
+    end
+  end
+
   private
 
   def lookup(*args)
@@ -245,6 +269,25 @@ module Hosttag
     else
       r.sunion(*keys).sort
     end
+  end
+
+  # Load all host/tag files in datadir, returning a { host => [ taglist ] } hash
+  def load_directory(datadir, options)
+    host_tag_hash = {}
+
+    Dir.chdir(datadir)
+    Dir.glob("*").each do |host|
+      next if not File.directory?(host)
+
+      host_tag_hash[host] = []
+      Dir.glob("#{host}/*").each do |tag_path|
+        next if not File.file?(tag_path)
+        tag = File.basename(tag_path)
+        host_tag_hash[host].push(tag)
+      end
+    end
+
+    return host_tag_hash
   end
 
   def die(error)
