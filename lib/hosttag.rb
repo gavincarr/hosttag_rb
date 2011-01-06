@@ -191,6 +191,8 @@ module Hosttag
 
     # Delete hosts from each tag
     recheck_for_skip = false
+    all_tags_noskip = r.get_key('all_tags_noskip')
+    all_tags = r.get_key('all_tags')
     tags.each do |tag|
       # If we've deleted a SKIP tag from these hosts, flag to do some extra work
       recheck_for_skip = true if tag == 'SKIP'
@@ -213,6 +215,8 @@ module Hosttag
         r.del(tag_key)
       end
     end
+    r.del(all_tags_noskip) if r.scard(all_tags_noskip) == 0
+    r.del(all_tags) if r.scard(all_tags) == 0
 
     # If we've deleted a SKIP tag here, we need to recheck all tags for all non-skip hosts
     recheck_skip_change_for_all_tags(non_skip_host.keys, :delete, r) if recheck_for_skip
@@ -364,6 +368,7 @@ module Hosttag
         r.sadd(all_tags_noskip, tag)
       end
     end
+    r.del(all_tags_noskip) if r.scard(all_tags_noskip) == 0
   end
 
   # Load all host/tag files in datadir, returning a { host => [ taglist ] } hash
