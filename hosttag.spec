@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.9
+Version: 0.10
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -77,6 +77,15 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Thu Jan 06 2011 Gavin Carr <gavin@openfusion.com.au> 0.10
+- Librification release, creating new Hosttag module with core functionality.
+- Rewrite hosttag, htset, and htimport to use new Hosttag module.
+- Rewrite hosttag_{add,delete}_tags routines to handle tricksy SKIP corner cases.
+- Create lib versions of unit tests alongside existing bin ones.
+- Expand unit test coverage for htset/htdel.
+- Update unit tests to use library calls instead of calling out to utils.
+- Change all_{hosts,tags}_* key names for greater clarity.
+
 * Mon May 24 2010 Gavin Carr <gavin@openfusion.com.au> 0.9
 - Migrate redis api calls over to redis 2.0.0 gem.
 - Add --all option to htdel, for deleting all tags from a host.
