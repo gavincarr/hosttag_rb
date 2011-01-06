@@ -34,16 +34,16 @@ def parse_options(me)
     die(opts)
   end
   opts.on('-A', '--all', '(htdel) Delete all tags from hosts') do
-    options[:all] = 1
+    options[:all] = true
   end
-  opts.on('-y', '--autoconfirm', "(htdel) Don't ask for confirmation on delete all operations") do
-    options[:autoconfirm] = 1
+  opts.on('-y', '--yes', "(htdel) Don't ask for confirmation on delete all operations") do
+    options[:autoconfirm] = true
   end
   opts.on('-H', '--host', '--hosts', 'Treat unrecognised elements as hosts') do
-    options[:host_mode] = 1
+    options[:host_mode] = true
   end
   opts.on('-T', '--tag', '--tags', 'Treat unrecognised elements as tags') do
-    options[:tag_mode] = 1
+    options[:tag_mode] = true
   end
   opts.on('--ns=STR', '--namespace=STR', String, 'Namespace into which we load hosttag data. Default: hosttag') do |val|
     options[:namespace] = val
