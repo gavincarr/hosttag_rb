@@ -14,7 +14,7 @@ class TestHtsetBin < Test::Unit::TestCase
     datadir = "#{File.dirname(__FILE__)}/data_reset"
     @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{@bindir}/htimport #{@test_args} --delete --datadir #{datadir}`
+    `#{@bindir}/htimport #{@test_args} --delete --yes --datadir #{datadir}`
   end
 
   TESTS = [
@@ -23,11 +23,13 @@ class TestHtsetBin < Test::Unit::TestCase
       %w{foo},                      # ht -A output
       %w{foo},                      # ht -A -A output
       %w{centos},                   # ht -T output
+      %w{centos},                   # ht -T -T output
     ],
     [
       %w{htset foo centos5},
       %w{foo},
       %w{foo},
+      %w{centos centos5},
       %w{centos centos5},
     ],
     [
@@ -35,39 +37,67 @@ class TestHtsetBin < Test::Unit::TestCase
       %w{bar foo},
       %w{bar foo},
       %w{centos centos5},
+      %w{centos centos5},
     ],
     [
       %w{htset bar centos4},
       %w{bar foo},
       %w{bar foo},
       %w{centos centos4 centos5},
+      %w{centos centos4 centos5},
     ],
     [
       %w{htset bar SKIP},
       %w{foo},
       %w{bar foo},
-      %w{centos centos4 centos5},
+      %w{centos centos5},
+      %w{SKIP centos centos4 centos5},
+    ],
+    [
+      %w{htset bar centos4-i386},
+      %w{foo},
+      %w{bar foo},
+      %w{centos centos5},
+      %w{SKIP centos centos4 centos4-i386 centos5},
+    ],
+    [
+      %w{htdel bar centos4},
+      %w{foo},
+      %w{bar foo},
+      %w{centos centos5},
+      %w{SKIP centos centos4-i386 centos5},
     ],
     [
       %w{htdel bar SKIP},
       %w{bar foo},
       %w{bar foo},
-      %w{centos centos4 centos5},
-    ],
-    [
-      %w{htdel -A -y bar},
-      %w{foo},
-      %w{foo},
-      %w{centos centos5},
-    ],
-    [
-      %w{htdel foo centos},
-      %w{foo},
-      %w{foo},
-      %w{centos5},
+      %w{centos centos4-i386 centos5},
+      %w{centos centos4-i386 centos5},
     ],
     [
       %w{htdel foo centos5},
+      %w{bar foo},
+      %w{bar foo},
+      %w{centos centos4-i386},
+      %w{centos centos4-i386},
+    ],
+    [
+      %w{htdel foo centos},
+      %w{bar},
+      %w{bar},
+      %w{centos centos4-i386},
+      %w{centos centos4-i386},
+    ],
+    [
+      %w{htdel bar centos},
+      %w{bar},
+      %w{bar},
+      %w{centos4-i386},
+      %w{centos4-i386},
+    ],
+    [
+      %w{htdel bar centos4-i386},
+      [],
       [],
       [],
       [],
@@ -75,7 +105,7 @@ class TestHtsetBin < Test::Unit::TestCase
   ]
 
   def test_htset
-    TESTS.each do |op, all_hosts, all_hosts2, all_tags|
+    TESTS.each do |op, all_hosts, all_hosts_full, all_tags, all_tags_full|
       cmd = op.join(' ')
       bin = op.shift()
       error = %x{#{@bindir}/#{bin} #{@test_args} #{op.join(' ')}}
@@ -83,9 +113,11 @@ class TestHtsetBin < Test::Unit::TestCase
       # Check results
       assert_equal("", error, "Error output found: #{error}")
       assert_equal(all_hosts, hosttag_all_hosts(@test_opts), "all_hosts, #{cmd}")
-      assert_equal(all_hosts2, hosttag_all_hosts(@test_opts.merge({ :include_skip? => true })),
+      assert_equal(all_hosts_full, hosttag_all_hosts(@test_opts.merge({ :include_skip? => true })),
         "all_hosts include_skip, #{cmd}")
       assert_equal(all_tags, hosttag_all_tags(@test_opts),  "all_tags, #{cmd}")
+      assert_equal(all_tags_full, hosttag_all_tags(@test_opts.merge({ :include_skip? => true })),
+        "all_tags_full, #{cmd}")
     end
   end
 
