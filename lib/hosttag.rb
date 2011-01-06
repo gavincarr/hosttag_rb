@@ -218,23 +218,42 @@ module Hosttag
     recheck_skip_change_for_all_tags(non_skip_host.keys, :delete, r) if recheck_for_skip
   end
 
-  # Delete all tags from the given hosts. Interactively confirms the deletion
-  # for each host, unless the :autoconfirm option is set.
+  # Delete all hosts and tags in the hosttag datastore. This is the nuclear option,
+  # used in hosttag_import_from_directory if :delete => true. Interactively confirms
+  # unless the :autoconfirm option is set.
   # The final argument may be an options hash, which accepts the following
   # keys:
-  # - :autoconfirm - if true, don't interactively confirm deletions
+  # - :autoconfirm - if true, truncate without asking for any confirmation
+  def hosttag_truncate(options)
+    if not options[:autoconfirm]
+      print "Do you really want to delete EVERYTHING from your datastore? [yN] "
+      $stdout.flush
+      confirm = $stdin.gets.chomp
+      return unless confirm =~ %r{^y}i
+    end
+
+    r = hosttag_server(options)
+    r.keys(r.get_key("*")).split(%r{ }).each { |k| r.del(k) }
+  end
+
+  # Delete all tags from the given hosts. Interactively confirms the deletions
+  # unless the :autoconfirm option is set.
+  # The final argument may be an options hash, which accepts the following
+  # keys:
+  # - :autoconfirm - if true, do deletes without asking for any confirmation
   def hosttag_delete_all_tags(hosts, options)
+    if not options[:autoconfirm]
+      host_str = hosts.join(' ')
+      print "Do you want to delete all tags on the following host(s):\n  #{host_str}\nConfirm? [yN] "
+      $stdout.flush
+      confirm = $stdin.gets.chomp
+      return unless confirm =~ %r{^y}i
+    end
+
     hosts.each do |host|
       begin
         tags = hosttag_lookup_hosts(host, options)
-        if not options[:autoconfirm]
-          print "Delete all tags on host '#{host}'? [yN] "
-          $stdout.flush
-          confirm = $stdin.gets.chomp
-        end
-        if options[:autoconfirm] or confirm =~ %r{^y}i
-          hosttag_delete_tags([ host ], tags, options)
-        end
+        hosttag_delete_tags([ host ], tags, options)
       rescue
         warn "Warning: invalid host '#{host}' - cannot delete"
       end
@@ -251,10 +270,7 @@ module Hosttag
   # - :autoconfirm - if true, don't interactively confirm deletions
   def hosttag_import_from_directory(datadir, options)
     # Delete ALL hosts and tags from the datastore if options[:delete] set
-    if options[:delete]
-      hosts_all = hosttag_all_hosts(options.merge({ :include_skip? => true }))
-      hosttag_delete_all_tags(hosts_all, options)
-    end
+    hosttag_truncate(options) if options[:delete]
 
     # Load directory into a { host => [ taglist ] } hash
     host_tag_hash = load_directory(datadir, options)
