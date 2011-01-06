@@ -6,10 +6,12 @@ require 'ftools'
 class TestHosttagBin < Test::Unit::TestCase
   def setup
     @test_args = '--server localhost --ns hosttag_testing'
+    @test_opts = { :server => 'localhost', :namespace => 'hosttag_testing',
+      :delete => true, :autoconfirm => true, :debug => false }
     @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     datadir = "#{File.dirname(__FILE__)}/data_hosttag"
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{@bindir}/htimport #{@test_args} --delete --yes --datadir #{datadir}`
+    hosttag_import_from_directory(datadir, @test_opts)
   end
 
   # format: args (string) => expected (either string or regex)
