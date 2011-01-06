@@ -1,12 +1,16 @@
 #!/usr/bin/ruby
 #
-# Quick and dirty script to dump hosttag datastore
+# Quick and dirty script to remap all_* keys to the new naming convention:
+# - all_{hosts,tags} => all_{hosts,tags}_full,
+# - all_{hosts,tags}_noskip => all_{hosts,tags}
 #
 
 require 'optparse'
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'hosttag/server'
+require 'hosttag'
+include Hosttag
 
 defaults = {}
 
@@ -59,12 +63,31 @@ end
 # ----------------------------------------------------------------------------
 # Main
 
-options, args = parse_options( defaults )
-
+options = parse_options( defaults )
 r = Hosttag::Server.new(options)
 
-# Dump
-r.keys(r.get_key('*')).split(%r{ }).sort.each do |k|
-  puts "#{k}: #{r.smembers(k).sort.join(' ')}"
+key = r.get_key('all_hosts_noskip')
+if not r.exists(key)
+  puts "No 'all_hosts_noskip' key found - aborting"
+  exit 1
+end
+
+%w{all_hosts all_tags}.each do |all_x|
+  key = r.get_key(all_x)
+  return unless r.exists(key)
+  members = r.smembers(key)
+  new_key = r.get_key("#{all_x}_full")
+  members.each { |m| r.sadd(new_key, m) }
+  r.del(key)
+end
+
+%w{all_hosts_noskip all_tags_noskip}.each do |all_x|
+  key = r.get_key(all_x)
+  return unless r.exists(key)
+  members = r.smembers(key)
+  all_x_new = all_x.sub(/_noskip$/, '')
+  new_key = r.get_key(all_x_new)
+  members.each { |m| r.sadd(new_key, m) }
+  r.del(key)
 end
 
