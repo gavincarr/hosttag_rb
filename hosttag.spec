@@ -3,7 +3,7 @@
 Summary: Hosttag client
 Name: hosttag
 Version: 0.10
-Release: 1%{org_tag}%{dist}
+Release: 2%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
 License: GPL
@@ -35,6 +35,7 @@ This package contains the hosttag server.
 test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 mkdir -p %{buildroot}%{ruby_sitelib}/hosttag
+install -m0644 lib/hosttag.rb %{buildroot}%{ruby_sitelib}/hosttag.rb
 install -m0644 lib/hosttag/server.rb %{buildroot}%{ruby_sitelib}/hosttag
 
 mkdir -p %{buildroot}%{_bindir}
@@ -61,6 +62,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root)
+%{ruby_sitelib}/hosttag.rb
 %{ruby_sitelib}/hosttag/*
 %{_bindir}/hosttag
 %{_bindir}/ht
