@@ -18,7 +18,7 @@ module Hosttag
   def hosttag_lookup_tags(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
     options[:type] = :tag
-    return lookup(args, options)
+    return lookup_keys(args, options)
   end
 
   # Lookup the given host(s), returning an array of tags that apply to
@@ -37,7 +37,7 @@ module Hosttag
   def hosttag_lookup_hosts(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
     options[:type] = :host
-    return lookup(args, options)
+    return lookup_keys(args, options)
   end
 
   # Lookup the given host(s) or tag(s), returning an array of tags or hosts,
@@ -61,7 +61,7 @@ module Hosttag
   #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
   def hosttag_lookup(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
-    return lookup(args, options) if options[:type]
+    return lookup_keys(args, options) if options[:type]
 
     begin
       return hosttag_lookup_tags(args, options)
@@ -233,7 +233,16 @@ module Hosttag
 
   private
 
-  def lookup(*args)
+  # Lookup the given keys in the redis datastore, returning an array of
+  # results. If more than one key is specified, resultsets are merged
+  # (either ANDed or ORed) depending on the value of the :rel option.
+  # The final argument must be an options hash, which accepts the
+  # following options:
+  # - :type - specifies the type of keys to lookup, either :host or :tag.
+  #   Required.
+  # - :rel - specifies how to merge multiple resultsets, either :and (set
+  #   intersection) or :or (set union).
+  def lookup_keys(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
     args.flatten!
 
