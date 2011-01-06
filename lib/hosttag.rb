@@ -17,8 +17,7 @@ module Hosttag
   #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
   def hosttag_lookup_tags(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
-    options[:type] = :tag
-    return lookup_keys(args, options)
+    return lookup_keys(args, options.merge({ :type => :tag }))
   end
 
   # Lookup the given host(s), returning an array of tags that apply to
@@ -36,8 +35,7 @@ module Hosttag
   #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
   def hosttag_lookup_hosts(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
-    options[:type] = :host
-    return lookup_keys(args, options)
+    return lookup_keys(args, options.merge({ :type => :host }))
   end
 
   # Lookup the given host(s) or tag(s), returning an array of tags or hosts,
