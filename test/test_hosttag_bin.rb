@@ -9,7 +9,7 @@ class TestHosttagBin < Test::Unit::TestCase
     @bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     datadir = "#{File.dirname(__FILE__)}/data_hosttag"
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{@bindir}/htimport #{@test_args} --delete --datadir #{datadir}`
+    `#{@bindir}/htimport #{@test_args} --delete --yes --datadir #{datadir}`
   end
 
   # format: args (string) => expected (either string or regex)

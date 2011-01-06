@@ -6,14 +6,14 @@ require 'ftools'
 require 'hosttag'
 include Hosttag
 
-class TestHosttag < Test::Unit::TestCase
+class TestHosttagLib < Test::Unit::TestCase
   def setup
     @test_args = '--server localhost --ns hosttag_testing'
     @test_opts = { :server => 'localhost', :namespace => 'hosttag_testing', :debug => false }
     datadir = "#{File.dirname(__FILE__)}/data_hosttag"
     bindir = File.join(File.dirname(__FILE__), '..', 'bin')
     File.directory?(datadir) or throw "missing datadir #{datadir}"
-    `#{bindir}/htimport #{@test_args} --delete --datadir #{datadir}`
+    `#{bindir}/htimport #{@test_args} --delete --yes --datadir #{datadir}`
   end
 
   # format: args (array), options (hash) => expected (array)
@@ -67,7 +67,7 @@ class TestHosttag < Test::Unit::TestCase
   # format: options (hash) => expected (array)
   TAGSET_ALL = [
     [ {},                           %w{centos centos4 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps} ],
-    [ { :include_skip? => true },   %w{SKIP centos centos4 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps} ],
+    [ { :include_skip? => true },   %w{SKIP centos centos4 centos4-i386 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps} ],
   ]
   def test_hosttag_all_tags
     TAGSET_ALL.each do |opts, expected|
