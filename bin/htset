@@ -23,7 +23,7 @@ def die(error)
 end
 
 def parse_options(me)
-  options = { :all => 0 }
+  options = { :all => 0, :autoconfirm => false }
   opts = OptionParser.new
   opts.banner = "Usage: #{me} [options] <host> [<host2> ...] <tag> [<tag2>...]"
   opts.on('-?', '-h', '--help') do
