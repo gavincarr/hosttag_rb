@@ -354,12 +354,12 @@ module Hosttag
   def load_directory(datadir, options)
     host_tag_hash = {}
 
-    Dir.chdir(datadir)
-    Dir.glob("*").each do |host|
-      next if not File.directory?(host)
+    Dir.glob("#{datadir}/*").each do |host_path|
+      next if not File.directory?(host_path)
+      host = host_path.sub(/^#{datadir}\//, '')
 
       host_tag_hash[host] = []
-      Dir.glob("#{host}/*").each do |tag_path|
+      Dir.glob("#{host_path}/*").each do |tag_path|
         next if not File.file?(tag_path)
         tag = File.basename(tag_path)
         host_tag_hash[host].push(tag)
