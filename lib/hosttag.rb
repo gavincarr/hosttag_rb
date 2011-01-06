@@ -80,8 +80,7 @@ module Hosttag
   #   the SKIP tag set. Default: false i.e. omit hosts tagged with SKIP.
   def hosttag_all_hosts(options)
     r = hosttag_server(options)
-    key = r.get_key('all_hosts')
-    key += "_noskip" if not options[:include_skip?]
+    key = r.get_key(options[:include_skip?] ? 'all_hosts_full' : 'all_hosts')
     $stderr.puts "+ key: #{key}" if options[:debug]
     return r.smembers(key).sort
   end
@@ -93,8 +92,7 @@ module Hosttag
   #   Default: false. Included for completeness.
   def hosttag_all_tags(options)
     r = hosttag_server(options)
-    key = r.get_key('all_tags')
-    key += "_noskip" if not options[:include_skip?]
+    key = r.get_key(options[:include_skip?] ? 'all_tags_full' : 'all_tags')
     $stderr.puts "+ key: #{key}" if options[:debug]
     return r.smembers(key).sort
   end
@@ -117,15 +115,15 @@ module Hosttag
       end
 
       # Add to all_hosts sets
-      all_hosts_noskip = r.get_key('all_hosts_noskip')
       all_hosts = r.get_key('all_hosts')
-      # all_hosts_noskip shouldn't include SKIP hosts, so those we remove
+      all_hosts_full = r.get_key('all_hosts_full')
+      # all_hosts shouldn't include SKIP hosts, so those we remove
       if skip_host[host]
-        r.srem(all_hosts_noskip, host)
+        r.srem(all_hosts, host)
       else
-        r.sadd(all_hosts_noskip, host)
+        r.sadd(all_hosts, host)
       end
-      r.sadd(all_hosts, host)
+      r.sadd(all_hosts_full, host)
     end
 
     # Add hosts to each tag
@@ -147,10 +145,10 @@ module Hosttag
       end
 
       # Add to all_tags sets
-      all_tags_noskip = r.get_key('all_tags_noskip')
       all_tags = r.get_key('all_tags')
-      r.sadd(all_tags_noskip, tag) unless all_hosts_skip_hosts
-      r.sadd(all_tags, tag)
+      all_tags_full = r.get_key('all_tags_full')
+      r.sadd(all_tags, tag) unless all_hosts_skip_hosts
+      r.sadd(all_tags_full, tag)
     end
 
     # If we've added a SKIP tag here, we need to recheck all tags for all skip hosts
@@ -174,25 +172,25 @@ module Hosttag
       end
 
       # Delete from all_hosts sets
-      all_hosts_noskip = r.get_key('all_hosts_noskip')
       all_hosts = r.get_key('all_hosts')
-      # If all tags have been deleted, or this is a SKIP host, remove from all_hosts_noskip
+      all_hosts_full = r.get_key('all_hosts_full')
+      # If all tags have been deleted, or this is a SKIP host, remove from all_hosts
       if r.scard(key) == 0 or skip_host
-        r.srem(all_hosts_noskip, host)
+        r.srem(all_hosts, host)
       else
         # NB: we explicitly add here in case we've deleted a SKIP tag
-        r.sadd(all_hosts_noskip, host)
+        r.sadd(all_hosts, host)
       end
       if r.scard(key) == 0
-        r.srem(all_hosts, host)
+        r.srem(all_hosts_full, host)
         r.del(key)
       end
     end
 
     # Delete hosts from each tag
     recheck_for_skip = false
-    all_tags_noskip = r.get_key('all_tags_noskip')
     all_tags = r.get_key('all_tags')
+    all_tags_full = r.get_key('all_tags_full')
     tags.each do |tag|
       # If we've deleted a SKIP tag from these hosts, flag to do some extra work
       recheck_for_skip = true if tag == 'SKIP'
@@ -201,22 +199,20 @@ module Hosttag
       hosts.each { |host| r.srem(tag_key, host) }
 
       # Delete from all_tags sets
-      all_tags_noskip = r.get_key('all_tags_noskip')
-      all_tags = r.get_key('all_tags')
-      # If all hosts have been deleted (or this is the SKIP tag), remove from all_tags_noskip
+      # If all hosts have been deleted (or this is the SKIP tag), remove from all_tags
       if r.scard(tag_key) == 0 or tag == 'SKIP'
-        r.srem(all_tags_noskip, tag)
+        r.srem(all_tags, tag)
       else
         # NB: we explicitly add here in case we've deleted a SKIP tag
-        r.sadd(all_tags_noskip, tag)
+        r.sadd(all_tags, tag)
       end
       if r.scard(tag_key) == 0
-        r.srem(all_tags, tag)
+        r.srem(all_tags_full, tag)
         r.del(tag_key)
       end
     end
-    r.del(all_tags_noskip) if r.scard(all_tags_noskip) == 0
     r.del(all_tags) if r.scard(all_tags) == 0
+    r.del(all_tags_full) if r.scard(all_tags_full) == 0
 
     # If we've deleted a SKIP tag here, we need to recheck all tags for all non-skip hosts
     recheck_skip_change_for_all_tags(non_skip_host.keys, :delete, r) if recheck_for_skip
@@ -336,7 +332,7 @@ module Hosttag
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
   # the given hosts, removing or re-adding them from/to those tag sets, and
-  # then recalculate the all_tags_noskip set for each of those tags
+  # then recalculate the all_tags set for each of those tags
   def recheck_skip_change_for_all_tags(hosts, change, r)
     recheck_tags = {}
     hosts.each do |host|
@@ -357,18 +353,18 @@ module Hosttag
       end
     end
 
-    # Now recheck the all_tags_noskip set, adding tags that have hosts, and
+    # Now recheck the all_tags set, adding tags that have hosts, and
     # removing any that don't
-    all_tags_noskip = r.get_key('all_tags_noskip')
+    all_tags = r.get_key('all_tags')
     recheck_tags.each do |tag, tag_key|
       tag_host_count = r.scard(tag_key)
       if tag_host_count == 0
-        r.srem(all_tags_noskip, tag)
+        r.srem(all_tags, tag)
       else
-        r.sadd(all_tags_noskip, tag)
+        r.sadd(all_tags, tag)
       end
     end
-    r.del(all_tags_noskip) if r.scard(all_tags_noskip) == 0
+    r.del(all_tags) if r.scard(all_tags) == 0
   end
 
   # Load all host/tag files in datadir, returning a { host => [ taglist ] } hash
