@@ -2,8 +2,8 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.10
-Release: 2%{org_tag}%{dist}
+Version: 0.10.1
+Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
 License: GPL
@@ -79,6 +79,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_sbindir}/htimport
 
 %changelog
+* Fri Jan 07 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.1
+- Fix a couple of small bugs in 0.10.
+
 * Thu Jan 06 2011 Gavin Carr <gavin@openfusion.com.au> 0.10
 - Librification release, creating new Hosttag module with core functionality.
 - Rewrite hosttag, htset, and htimport to use new Hosttag module.
