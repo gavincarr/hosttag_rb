@@ -65,10 +65,10 @@ def parse_options(me)
     die(opts) 
   end
 
-  if args.length < 2 and options[:all] != 1
+  if args.length < 2 and not options[:all]
     die(opts) 
   end
-  if options[:all] == 1 and me == 'htset'
+  if options[:all] and me == 'htset'
     warn "Error: --all not available with htset"
     die(opts)
   end 
