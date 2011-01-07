@@ -67,8 +67,8 @@ module Hosttag
       begin
         return hosttag_lookup_hosts(args, options)
       rescue
-        # If both lookups failed, return original error
-        warn e
+        # If both lookups failed, re-raise original error
+        raise e
       end
     end
   end
