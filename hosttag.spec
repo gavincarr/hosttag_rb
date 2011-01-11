@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.10.1
+Version: 0.10.2
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -39,14 +39,13 @@ install -m0644 lib/hosttag.rb %{buildroot}%{ruby_sitelib}/hosttag.rb
 install -m0644 lib/hosttag/server.rb %{buildroot}%{ruby_sitelib}/hosttag
 
 mkdir -p %{buildroot}%{_bindir}
-mkdir -p %{buildroot}%{_sbindir}
 install -m0755 bin/hosttag %{buildroot}%{_bindir}/hosttag
 install -m0755 bin/htexport %{buildroot}%{_bindir}/htexport
 
 # htset and htimport are executable by root only, to restrict tagging to root
-install -m0700 bin/htset %{buildroot}%{_sbindir}/htset
-install -m0700 bin/htdump %{buildroot}%{_sbindir}/htdump
-install -m0700 bin/htimport %{buildroot}%{_sbindir}/htimport
+install -m0700 bin/htset %{buildroot}%{_bindir}/htset
+install -m0700 bin/htdump %{buildroot}%{_bindir}/htdump
+install -m0700 bin/htimport %{buildroot}%{_bindir}/htimport
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
@@ -54,7 +53,7 @@ install -m0644 etc/README %{buildroot}%{_sysconfdir}/%{name}
 
 cd %{buildroot}%{_bindir}
 ln -s hosttag ht
-cd %{buildroot}%{_sbindir}
+cd %{buildroot}%{_bindir}
 ln -s htset htdel
 
 %clean
@@ -66,9 +65,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{ruby_sitelib}/hosttag/*
 %{_bindir}/hosttag
 %{_bindir}/ht
-%attr(0700,root,root) %{_sbindir}/htset
-%attr(0700,root,root) %{_sbindir}/htdump
-%{_sbindir}/htdel
+%attr(0700,root,root) %{_bindir}/htset
+%attr(0700,root,root) %{_bindir}/htdump
+%{_bindir}/htdel
 %doc README LICENCE
 
 %files server
@@ -76,9 +75,13 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
 %attr(0755,root,root) %{_bindir}/htexport
-%attr(0700,root,root) %{_sbindir}/htimport
+%attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Thu Jan 11 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.2
+- Fix some buglets in htset.
+- Move root utils from %{_sbindir} to %{_bindir}.
+
 * Fri Jan 07 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.1
 - Fix a couple of small bugs in 0.10.
 
