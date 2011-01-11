@@ -4,6 +4,7 @@
 #
 # Usage:
 #   htset <host1> [<host2> ...] <tag> [<tag2> ...]
+#   htdel <host1> [<host2> ...] <tag> [<tag2> ...]
 #
 
 require 'optparse'
@@ -23,7 +24,7 @@ def die(error)
 end
 
 def parse_options(me)
-  options = { :all => 0, :autoconfirm => false }
+  options = { :all => false, :autoconfirm => false }
   opts = OptionParser.new
   opts.banner = "Usage: #{me} [options] <host> [<host2> ...] <tag> [<tag2>...]"
   opts.on('-?', '-h', '--help') do
@@ -68,8 +69,8 @@ def parse_options(me)
   if args.length < 2 and not options[:all]
     die(opts) 
   end
-  if options[:all] and me == 'htset'
-    warn "Error: --all not available with htset"
+  if options[:all] and me =~ m/set$/
+    warn "Error: --all not available with #{me}"
     die(opts)
   end 
   if options[:host_mode] and options[:tag_mode]
@@ -130,7 +131,7 @@ mode = $0.sub(/^.*\//, '')
 options, args = parse_options(mode)
 
 # Normal mode
-if (options[:all] == 0)
+if (not options[:all])
   results = classify_args(args, options)
   if options[:verbose] 
     print "+ results: "
@@ -149,14 +150,14 @@ if (options[:all] == 0)
     end
   end
 
-  if (mode == 'htdel') 
+  if (mode =~ /del$/)
     hosttag_delete_tags(results[:host], results[:tag], options)
   else
     hosttag_add_tags(results[:host], results[:tag], options)
   end
 
 # htdel --all mode
-else
+elsif (mode =~ /del$/)
   hosttag_delete_all_tags(args, options)
 
 end
