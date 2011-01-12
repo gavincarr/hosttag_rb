@@ -69,7 +69,7 @@ def parse_options(me)
   if args.length < 2 and not options[:all]
     die(opts) 
   end
-  if options[:all] and me =~ m/set$/
+  if options[:all] and me =~ /set$/
     warn "Error: --all not available with #{me}"
     die(opts)
   end 
