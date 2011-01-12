@@ -133,34 +133,36 @@ end
 if options[:list] and options[:one]
   usage(opts, "Warning: -L/--list and -1 are incompatible")
 end 
-if options[:list] and options[:all]
-  usage(opts, "Warning: -L/--list and -A/--all-hosts/-T/--all-tags are incompatible")
-end 
 
 # All request
 if options[:all]
   if options[:all] == :hosts
-    render hosttag_all_hosts(options), options
+    all = hosttag_all_hosts(options)
   else
-    render hosttag_all_tags(options), options
+    all = hosttag_all_tags(options)
   end
+  if options[:list]
+    args = all
+  else
+    render all, options
+    exit
+  end
+end
 
 # Standard request
+# In list mode, process all args separately; otherwise, do them all at once
+if options[:list]
+  arg_list = args
 else
-  # In list mode, process all args separately; otherwise, do them all at once
-  if options[:list]
-    arg_list = args
-  else
-    arg_list = [ args ]
-  end
+  arg_list = [ args ]
+end
 
-  arg_list.each do |a|
-    begin
-      results = hosttag_lookup(a, options)
-      render results, options, a
-    rescue => e
-      warn e
-    end
+arg_list.each do |a|
+  begin
+    results = hosttag_lookup(a, options)
+    render results, options, a
+  rescue => e
+    warn e
   end
 end
 
