@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.10.3
+Version: 0.10.4
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -78,6 +78,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Wed Jan 12 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.4
+- Add support for hosttag -A -l and -T -l.
+
 * Wed Jan 12 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.3
 - Fix hosttag.render to handle nil results better.
 
