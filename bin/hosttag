@@ -40,12 +40,13 @@ def usage(opts, msg = nil)
   exit
 end
 
-def render(result, options, arg = nil)
+def render(results, options, arg = nil)
+  return unless results and results.length > 0
   # Report
   if options[:list]
-    puts "#{arg}: #{result.sort.join(' ')}"
+    puts "#{arg}: #{results.sort.join(' ')}"
   else
-    puts result.sort.join(options[:join])
+    puts results.sort.join(options[:join])
   end
 end
 
