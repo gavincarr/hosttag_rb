@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.10.4
+Version: 0.10.5
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -44,8 +44,8 @@ install -m0755 bin/htexport %{buildroot}%{_bindir}/htexport
 
 # htset and htimport are executable by root only, to restrict tagging to root
 install -m0700 bin/htset %{buildroot}%{_bindir}/htset
-install -m0700 bin/htdump %{buildroot}%{_bindir}/htdump
 install -m0700 bin/htimport %{buildroot}%{_bindir}/htimport
+#install -m0700 bin/htdump %{buildroot}%{_bindir}/htdump
 
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}
 install -m0644 etc/Makefile %{buildroot}%{_sysconfdir}/%{name}
@@ -66,8 +66,8 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %{_bindir}/hosttag
 %{_bindir}/ht
 %attr(0700,root,root) %{_bindir}/htset
-%attr(0700,root,root) %{_bindir}/htdump
 %{_bindir}/htdel
+#%attr(0700,root,root) %{_bindir}/htdump
 %doc README LICENCE
 
 %files server
@@ -78,6 +78,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Thu Jan 13 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.5
+- Remove htdump from spec file, since it clashes with htdig utility.
+
 * Wed Jan 12 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.4
 - Add support for hosttag -A -l and -T -l.
 
