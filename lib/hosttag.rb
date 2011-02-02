@@ -233,7 +233,7 @@ module Hosttag
     end
 
     r = hosttag_server(options)
-    r.keys(r.get_key("*")).split(%r{ }).each { |k| r.del(k) }
+    r.keys(r.get_key("*")).each { |k| r.del(k) }
   end
 
   # Delete all tags from the given hosts. Interactively confirms the deletions
