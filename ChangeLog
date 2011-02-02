@@ -1,0 +1,34 @@
+ChangeLog
+---------
+
+0.11
+* Add gemspec file.
+* Remove rubygems require from Hosttag::Server.
+
+0.10.5 - 2011-01-13
+* Remove htdump from spec file.
+
+0.10.4 - 2011-01-12
+* Make --list work properly with 'ht -A' and 'ht -T'.
+
+0.10.3 - 2011-01-12
+* Tweak hosttag.render to handle nil resultsets better.
+
+0.10.2 - 2011-01-11
+* Fix a few small bugs in htset.
+
+0.10.1 - 2011-01-07
+* Tweak Hosttag.lookup_keys to re-raise original error on second lookup failure.
+* Fix stupid :all == 1 buglets in htset.
+
+0.10 - 2011-01-06
+* Rename all_hosts* and all_tags* labels for better clarity.
+* Add hosttag_truncate method, and use for import.
+* Replace htimport in unit tests with Hosttag.hosttag_import_from_directory.
+* Remove bogus chdir from Hosttag.load_directory.
+* Update Hosttag.hosttag_lookup_{tags,hosts} to leave options hash unchanged.
+* Rename Hosttag.lookup to lookup_keys.
+* Refactor core import functionality from htimport to Hosttag.hosttag_import_from_directory.
+* Unit test additions and updates.
+* Hosttag documentation updates.
+
