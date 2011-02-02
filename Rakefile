@@ -8,7 +8,7 @@ end
 
 desc "Validate the gemspec"
 task :validate do
-    gemspec.validate
+  gemspec.validate
 end
 
 desc 'Build gem locally'
@@ -20,10 +20,17 @@ end
 
 desc "Install gem locally"
 task :install => :build do
-    system "gem install pkg/#{gemspec.name}-#{gemspec.version}"
+  system "gem install pkg/#{gemspec.name}-#{gemspec.version}"
+end
+
+desc "Test install gem locally in pkg"
+task :test_install => :build do
+  FileUtils.mkdir_p 'pkg/gem'
+  system "gem install -i pkg/gem pkg/#{gemspec.name}-#{gemspec.version}"
 end
 
 desc "Clean automatically generated files"
+desc "Clean automatically generated files"
 task :clean do
-    FileUtils.rm_rf "pkg"
+  FileUtils.rm_rf "pkg"
 end
