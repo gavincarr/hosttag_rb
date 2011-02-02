@@ -1,6 +1,5 @@
 # Hosttag::Server class, extending Redis
 
-require 'rubygems'
 require 'redis'
 require 'resolv'
 
