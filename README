@@ -1,9 +1,8 @@
 Introduction
 ------------
 
-Hosttag is a simple client/server system for tagging hosts/hostnames into
-groups or classes. It uses redis as a datastore, and requires the 'redis'
-rubygem.
+Hosttag is a client for tagging hostnames into groups or classes, storing 
+the mappings in a redis datastore. It requires the 'redis' rubygem.
 
 
 Hosttag assumes your redis server is found on a server called 'hosttag' on
