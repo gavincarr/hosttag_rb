@@ -1,94 +1,77 @@
-
-HostTag README
-==============
-
-HostTag is a very simple system for defining hosts and associating arbitrary 
-tags (groups, classes) with those hosts. 
-
-It uses the redis key-value store to store and make available the host => tag 
-mappings, and provides a simple 'hosttag' (or 'ht') client to query those
-mappings.
-
-Initially only the client was network capable; tags had to be maintained on 
-the server (in the /etc/hosttag directory).
-
-
-Client Usage
+Introduction
 ------------
 
-Querying:
-
-* ht <foo>
-
-  Show all the hosts that have tag <foo> set
+Hosttag is a simple client/server system for tagging hosts/hostnames into
+groups or classes. It uses redis as a datastore, and requires the 'redis'
+rubygem.
 
 
-* ht [-a] <tag1> <tag2>
-
-  Show all the hosts that have <tag1> AND <tag2> set (intersection)
-
-
-* ht -o <tag1> <tag2>
-
-  Show all the hosts that have <tag1> OR <tag2> set (union)
-
-
-* ht -A 
-
-  Show *all* hosts
+Hosttag assumes your redis server is found on a server called 'hosttag' on
+the default redis port (6379). You can either setup 'hosttag' as a hostname
+alias in a local hosts file, or specify an alternative host to use in a
+HOSTTAG_SERVER environment variable, or explicitly via a -s/--server
+<hostname> argument. Similarly, an alternate port can be specified using a
+HOSTTAG_PORT environment variable, or a -p/--port <port> command line
+argument.
 
 
 
+Basic Usage
+-----------
 
-* ht -t <host> 
-
-  Show the tags on host <host>
-
-* ht -a <host1> <host2>
-
-  Show the tags that occur on both host1 and host2 (intersection)
-
-* ht -o <host1> <host2>
-
-  Show the tags that occur on either host1 and host2 (union)
-
-* ht -T
-
-  Show *all* tags
+  # Set some tags (-T says assume anything you don't know is a tag)
+  $ htset -T zeus dell centos centos5 server
+  $ htset -T minerva dell centos centos6 laptop
+  $ htset -T hermes hp ubuntu lucid desktop
+  $ htset -T athena hp ubuntu maverick server
 
 
+  # Queries
+  $ ht dell               
+  minerva zeus
+
+  $ ht ubuntu
+  hermes athena
+
+  $ ht -o hp dell         # -o/--or ORs arguments
+  hermes minerva zeus
+
+  $ ht -a ubuntu server   # -a/--and ANDs arguments
+  athena
+
+  $ ht -A                 # all hosts
+  athena hermes minerva zeus
+
+  $ ht -T                 # all tags
+  centos centos5 centos6 dell desktop hp laptop lucid maverick server
 
 
 
 
+Security
+--------
+
+A warning on security: basically, there isn't any. Anyone who can get write
+to your redis server can write, rewrite, and delete all your hosttags. So
+you should only use hosttag on a trusted network.
+
+Redis supports a password-ed mode, and it might make sense to use that via
+a config file or something, so you could at least restrict usage via file
+permissions (although traffic would still be in the clear, I believe). For
+now, though, there's no security.
 
 
-TODO - Management Utilities
----------------------------
 
-e.g.
+Installation
+------------
 
-* htset -h <host1> [-h <host2>] <tag1> [<tag2> <tag3>]
+To install from source, unpack the tarball and run 'rake install' (requires
+rubygems and rake). You can set GEM_HOME to an alternate install directory 
+(e.g. ~/.gem) if you want to install somewhere other than your gem default.
 
-  Set tag(s) on this host
+RPMs are available for CentOS/RHEL {5,6} from the Open Fusion repository:
 
-
-* htset -t <tag> [-t <tag2>] <host1> [<host2> <host3>]
-
-  Set tag(s) on hosts
-  
-
-
-* htremove -h <bar> <tag1> <tag2> <tag3>
-
-  Remove these tags from this host
-
-
-* htremove -t <tag> <host1> <host2> <host3>
-
-  Remove this tag from these hosts
-  
-
+  http://www.openfusion.net/linux/openfusion_rpm_repository
 
 
 
@@ -96,10 +79,9 @@ e.g.
 Author
 ------
 
-Gavin Carr <gavin@openfusion.com.au>
+Gavin Carr <gavin@openfusion.com.au>, http://www.openfusion.net/
 
-Copyright 2008-2009 Gavin Carr
-
+Copyright 2010-2011 Gavin Carr.
 
 
 
