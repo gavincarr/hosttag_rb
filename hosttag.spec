@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.10.5
+Version: 0.11
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -13,18 +13,26 @@ BuildArch: noarch
 Requires: rubygems, rubygem-redis >= 2.0.0
 
 %description
-Hosttag is a client/server system for tagging hosts into groups or classes.
-This package contains the hosttag client.
+Hosttag is a client for tagging hostnames into groups or classes, storing
+the mappings in a redis datastore.
 
-%package server
-Summary: Hosttag server
+This package contains the hosttag client utilities.
+
+%package server-utils
+Summary: Hosttag server utilities
 Group: Applications/System
 Requires: hosttag = %version
-Requires: redis, rubygems, rubygem-redis
+Requires: redis, rubygems, rubygem-redis >= 2.0
+Obsoletes: hosttag-server
+Conflicts: hosttag-server
 
-%description server
-Hosttag is a client/server system for tagging hosts into groups or classes.
-This package contains the hosttag server.
+%description server-utils
+Hosttag is a client for tagging hostnames into groups or classes, storing
+the mappings in a redis datastore.
+
+This package contains optional hosttag server utilities, allowing you to
+export and import hosttag mappings to disk. It's not required for normal
+use, however.
 
 %prep
 %setup
@@ -70,7 +78,7 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 #%attr(0700,root,root) %{_bindir}/htdump
 %doc README LICENCE
 
-%files server
+%files server-utils
 %defattr(-,root,root)
 %config(noreplace) %{_sysconfdir}/%{name}/Makefile
 %{_sysconfdir}/%{name}/README
@@ -78,6 +86,10 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Wed Feb 02 2011 Gavin Carr <gavin@openfusion.com.au> 0.11
+* Add Hosttag::Server support for HOSTTAG_{SERVER,PORT,NAMESPACE} env variables.
+- Rename hosttag-server subpackage to hosttag-server-utils.
+
 * Thu Jan 13 2011 Gavin Carr <gavin@openfusion.com.au> 0.10.5
 - Remove htdump from spec file, since it clashes with htdig utility.
 

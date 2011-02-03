@@ -2,7 +2,10 @@ ChangeLog
 ---------
 
 0.11
-* Add gemspec file.
+* Update README.
+* Add Hosttag::Server support for HOSTTAG_{SERVER,PORT,NAMESPACE} env variables.
+* Add gemspec and assorted Rakefile bits.
+* Rename hosttag-server subpackage to hosttag-server-utils.
 * Remove rubygems require from Hosttag::Server.
 
 0.10.5 - 2011-01-13
