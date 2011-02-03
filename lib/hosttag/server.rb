@@ -6,7 +6,11 @@ require 'resolv'
 module Hosttag
   class Server < Redis
     def initialize(options)
-      @defaults = { :server => 'hosttag', :port => 6379, :namespace => 'hosttag' }
+      @defaults = { 
+        :server     => ENV['HOSTTAG_SERVER']    || 'hosttag', 
+        :port       => ENV['HOSTTAG_PORT']      || 6379, 
+        :namespace  => ENV['HOSTTAG_NAMESPACE'] || 'hosttag',
+      }
       @defaults.merge!(options)
        
       # Check :server name resolves
