@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 #
 # Quick and dirty script to remap all_* keys to the new naming convention:
 # - all_{hosts,tags} => all_{hosts,tags}_full,
