@@ -322,7 +322,7 @@ module Hosttag
 
     # Lookup and return
     if keys.length == 1
-      r.smembers(keys).sort
+      r.smembers(keys[0]).sort
     elsif rel == :and
       r.sinter(*keys).sort
     else
