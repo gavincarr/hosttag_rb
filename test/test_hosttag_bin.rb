@@ -3,6 +3,9 @@
 require 'test/unit'
 require 'fileutils'
 
+require 'hosttag'
+include Hosttag
+
 class TestHosttagBin < Test::Unit::TestCase
   def setup
     @test_args = '--server localhost --ns hosttag_testing'
