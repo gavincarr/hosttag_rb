@@ -1,5 +1,7 @@
 # Hosttag::Server class, extending Redis
 
+# Blech - shouldn't need to require rubygems here, but fails on 1.8.x otherwise
+require 'rubygems'
 require 'redis'
 require 'resolv'
 
