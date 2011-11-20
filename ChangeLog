@@ -1,7 +1,14 @@
 ChangeLog
 ---------
 
-0.11
+0.12 - 2011-11-21
+* Fix smembers buglet for 1.9.x compatibility (Alexis Letessier).
+* Change from ftools to fileutils for compatibility with 1.9.x (Alexis Letessier).
+* Change hashbag line to /usr/bin/env ruby (Alexis Letessier).
+* Add back require rubygems to hosttag/server to workaround problems on 1.8.x.
+* Add missing Hosttag include to test/test_hosttag_bin.rb.
+
+0.11 - 2011-02-03
 * Update README.
 * Add Hosttag::Server support for HOSTTAG_{SERVER,PORT,NAMESPACE} env variables.
 * Add gemspec and assorted Rakefile bits.
