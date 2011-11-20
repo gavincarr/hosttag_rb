@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.11
+Version: 0.12
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -86,6 +86,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Mon Nov 21 2011 Gavin Carr <gavin@openfusion.com.au> 0.12
+- Cleanups and tweaks for better compatibility with ruby 1.9.x.
+
 * Wed Feb 02 2011 Gavin Carr <gavin@openfusion.com.au> 0.11
 * Add Hosttag::Server support for HOSTTAG_{SERVER,PORT,NAMESPACE} env variables.
 - Rename hosttag-server subpackage to hosttag-server-utils.
