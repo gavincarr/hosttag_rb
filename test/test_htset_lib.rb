@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 require 'test/unit'
-require 'ftools'
+require 'fileutils'
 
 require 'hosttag'
 include Hosttag

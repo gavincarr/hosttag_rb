@@ -8,7 +8,7 @@
 #
 
 require 'optparse'
-require 'ftools'
+require 'fileutils'
 require 'pp'
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
