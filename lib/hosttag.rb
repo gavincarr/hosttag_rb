@@ -1,6 +1,7 @@
 
 require 'hosttag/server'
 require 'set'
+require 'pp'
 
 module Hosttag
 
@@ -83,7 +84,8 @@ module Hosttag
     r = hosttag_server(options)
     key = r.get_key(options[:include_skip?] ? 'all_hosts_full' : 'all_hosts')
     $stderr.puts "+ key: #{key}" if options[:debug]
-    return r.smembers(key).sort
+    ret =  r.smembers(key).sort
+    return ret.map { |r| r.gsub(/_meta/,"") }.to_set.to_a
   end
 
   # Return an array of all tags
@@ -95,7 +97,8 @@ module Hosttag
     r = hosttag_server(options)
     key = r.get_key(options[:include_skip?] ? 'all_tags_full' : 'all_tags')
     $stderr.puts "+ key: #{key}" if options[:debug]
-    return r.smembers(key).sort
+    ret = r.smembers(key).sort
+    return remove_metadata_tags( ret )  
   end
 
   # Add the given tags to all the given hosts
@@ -346,13 +349,16 @@ module Hosttag
     end
 
     # Lookup and return
+    ret = ""
     if keys.length == 1
-      r.smembers(keys[0]).sort
+      ret = r.smembers(keys[0]).to_set.to_a.sort
     elsif rel == :and
-      r.sinter(*keys).sort
+      ret = r.sinter(*keys).to_set.to_a.sort
     else
-      r.sunion(*keys).sort
+      ret = r.sunion(*keys).to_set.to_a.sort
     end
+    
+    ret.map { |r| r.gsub(/_meta/,"") } 
   end
 
   # for a given set of tags extract out a list of all the 
@@ -387,6 +393,24 @@ module Hosttag
     result.to_set.to_a # return unique elements (.uniq() does not work here)
   end
 
+  # remove the metadata results from the set of all tags that is returned 
+  # when the hosttag_all_tags is used. 
+  def remove_metadata_tags( tags ) 
+    results = []
+    tags.each do |t|
+      unless t.include? "::"
+        results << t 
+        next 
+      end
+      res = hosttag_lookup(t , { :type => :tag })
+      res.each do |r|
+        if hosttag_lookup(r , { :type => :host }).include? t
+          results << t
+        end
+      end 
+    end
+    results.to_set.to_a
+  end
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
   # the given hosts, removing or re-adding them from/to those tag sets, and
