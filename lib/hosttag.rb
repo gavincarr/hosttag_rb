@@ -108,8 +108,12 @@ module Hosttag
     skip_host = {}
     all_hosts_skip_hosts = true
     hosts.each do |host|
+      host_meta = host + "_meta"
+
       key = r.get_key('host', host)
       tags.each { |tag| r.sadd(key, tag) }
+      key_meta = r.get_key('host', host_meta)
+      tags_meta.each { |tag| r.sadd(key_meta, tag) }
 
       if r.sismember(key, 'SKIP')
         skip_host[host] = true
@@ -123,27 +127,33 @@ module Hosttag
       # all_hosts shouldn't include SKIP hosts, so those we remove
       if skip_host[host]
         r.srem(all_hosts, host)
+        r.srem(all_hosts, host_meta)
       else
         r.sadd(all_hosts, host)
+        r.sadd(all_hosts, host_meta)
       end
       r.sadd(all_hosts_full, host)
+      r.sadd(all_hosts_full, host_meta)
     end
 
     # Add hosts to each tag
     recheck_for_skip = false
-    tags.each do |tag|
+    tags_total = tags + tags_meta
+    tags_total.each do |tag|
       # If we've added a SKIP tag to these hosts, flag to do some extra work
       recheck_for_skip = true if tag == 'SKIP'
 
       key = r.get_key('tag', tag)
       hosts.each do |host|
+        host_meta = host + "_meta"
         # The standard case is to add the host to the list for this tag.
         # But we don't want SKIP hosts being included in these lists, so
         # for them we actually do a remove to make sure they're omitted.
         if skip_host[host] and tag != 'SKIP'
           r.srem(key, host)
         else
-          r.sadd(key, host)
+          r.sadd(key, host) if tags.include? tag
+          r.sadd(key, host_meta) if tags_meta.include tag
         end
       end
 
