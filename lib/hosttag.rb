@@ -153,7 +153,7 @@ module Hosttag
           r.srem(key, host)
         else
           r.sadd(key, host) if tags.include? tag
-          r.sadd(key, host_meta) if tags_meta.include tag
+          r.sadd(key, host_meta) if tags_meta.include? tag
         end
       end
 
