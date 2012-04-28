@@ -1,5 +1,6 @@
 
 require 'hosttag/server'
+require 'set'
 
 module Hosttag
 
@@ -101,6 +102,8 @@ module Hosttag
   def hosttag_add_tags(hosts, tags, options)
     r = hosttag_server(options)
 
+    tags_meta = extract_namespaces_from_tags( tags ) 
+
     # Add tags to each host
     skip_host = {}
     all_hosts_skip_hosts = true
@@ -158,6 +161,8 @@ module Hosttag
   # Delete the given tags from all the given hosts
   def hosttag_delete_tags(hosts, tags, options)
     r = hosttag_server(options)
+
+    tags_meta = extract_namespaces_from_tags( tags )
 
     # Delete tags from each host
     non_skip_host = {}
@@ -329,6 +334,39 @@ module Hosttag
       r.sunion(*keys).sort
     end
   end
+
+  # for a given set of tags extract out a list of all the 
+  # namespaces for use in the metadata host data set.
+  # Eg: tags=["centos","test::sydney::dc1::rack2","prod::sydney::dc2::rack4"]
+  # we will return an array consisting of the namespaces.
+  # EG: res=["test::sydney::dc1","test::sydney","test::","sydney::dc1::rack2",
+  # "sydney::dc1","sydney::","rack2::","prod::sydney::dc2","prod::sydney",
+  # "sydney::dc2::rack4","sydney::dc2","sydney::","dc2::rack4","rack4::"]
+  # These tags will not show up in normal results BUT you can search on them 
+  # to get lists of hosts, for example ht sydney::dc2 will return a list of 
+  # all hosts in sydney and dc2.
+  def extract_namespaces_from_tags( tags )
+    result = []
+    tags.each do |t|
+      next unless  t.include? "::"
+
+      a = t.split("::")
+      
+      until a.empty?  do
+        first = a.shift
+        c = Array.new a
+
+        result << first + "::"
+        c.each do |cc|
+          element = result.last + "::" + cc
+          element.gsub!(/::::/, '::')
+          result << element unless tags.include? element
+        end
+      end
+    end
+    result.to_set.to_a # return unique elements (.uniq() does not work here)
+  end
+
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
   # the given hosts, removing or re-adding them from/to those tag sets, and
