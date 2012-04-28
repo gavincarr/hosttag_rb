@@ -85,7 +85,7 @@ module Hosttag
     key = r.get_key(options[:include_skip?] ? 'all_hosts_full' : 'all_hosts')
     $stderr.puts "+ key: #{key}" if options[:debug]
     ret =  r.smembers(key).sort
-    return ret.map { |r| r.gsub(/_meta/,"") }.to_set.to_a
+    return ret.map { |r| r.gsub(/_meta/,"") }.to_set.to_a.sort
   end
 
   # Return an array of all tags
@@ -98,7 +98,7 @@ module Hosttag
     key = r.get_key(options[:include_skip?] ? 'all_tags_full' : 'all_tags')
     $stderr.puts "+ key: #{key}" if options[:debug]
     ret = r.smembers(key).sort
-    return remove_metadata_tags( ret )  
+    return remove_metadata_tags( ret )
   end
 
   # Add the given tags to all the given hosts
@@ -409,7 +409,7 @@ module Hosttag
         end
       end 
     end
-    results.to_set.to_a
+    results.to_set.to_a.sort
   end
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
