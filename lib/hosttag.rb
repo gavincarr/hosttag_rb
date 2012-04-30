@@ -185,7 +185,7 @@ module Hosttag
       key = r.get_key('host', host)
       tags.each { |tag| r.srem(key, tag) }
       key_meta = r.get_key('host', host_meta)
-      tags_meta.each { |tag| r.srem(key_meta, tag) }
+      tags_meta.each { |tag| r.srem(key_meta, tag) if tag_safe_to_delete?( host , tag ) }
 
       if r.sismember(key, 'SKIP')
         skip_host = true
@@ -223,8 +223,8 @@ module Hosttag
       recheck_for_skip = true if tag == 'SKIP'
 
       tag_key = r.get_key('tag', tag)
+      hosts.each { |host| r.srem(tag_key, host + "_meta") if tag_safe_to_delete?( host , tag ) }
       hosts.each { |host| r.srem(tag_key, host) }
-      hosts.each { |host| r.srem(tag_key, host + "_meta") }
 
       # Delete from all_tags sets
       # If all hosts have been deleted (or this is the SKIP tag), remove from all_tags
@@ -410,6 +410,23 @@ module Hosttag
       end 
     end
     results.to_set.to_a.sort
+  end
+
+  # when we delete a tag we also need to delete the correspoding 
+  # meta tags, however we need to check that a meta tag is still not 
+  # being used before deleting, for example TAG aaa::bbb will have 
+  # the following meta tags aaa:: bbb:: however if the host also has 
+  # aaa::ccc  (with tags aaa:: ccc::) we will remove needed meta tags
+  # this method will stop this from happening
+  def tag_safe_to_delete?( host, tag ) 
+    count = 0
+    tags = hosttag_lookup(host , { :type => :host })
+    tags.each do |t|
+      ns_tags = extract_namespaces_from_tags( t )  
+      count += 1 if ns_tags.include? tag 
+    end
+    return false if count > 0 
+    return true
   end
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
