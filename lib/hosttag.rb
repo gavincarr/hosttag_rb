@@ -98,7 +98,7 @@ module Hosttag
     key = r.get_key(options[:include_skip?] ? 'all_tags_full' : 'all_tags')
     $stderr.puts "+ key: #{key}" if options[:debug]
     ret = r.smembers(key).sort
-    return remove_metadata_tags( ret )
+    return remove_metadata_tags( ret, options )
   end
 
   # Add the given tags to all the given hosts
@@ -395,16 +395,18 @@ module Hosttag
 
   # remove the metadata results from the set of all tags that is returned 
   # when the hosttag_all_tags is used. 
-  def remove_metadata_tags( tags ) 
+  def remove_metadata_tags( tags , options) 
     results = []
     tags.each do |t|
       unless t.include? "::"
         results << t 
         next 
       end
-      res = hosttag_lookup(t , { :type => :tag })
+      options[:type] = :tag
+      res = hosttag_lookup(t , options)
       res.each do |r|
-        if hosttag_lookup(r , { :type => :host }).include? t
+        options[:type] = :host
+        if hosttag_lookup(r , options).include? t
           results << t
         end
       end 
