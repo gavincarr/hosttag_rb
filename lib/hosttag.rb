@@ -185,7 +185,8 @@ module Hosttag
       key = r.get_key('host', host)
       tags.each { |tag| r.srem(key, tag) }
       key_meta = r.get_key('host', host_meta)
-      tags_meta.each { |tag| r.srem(key_meta, tag) if tag_safe_to_delete?( host , tag ) }
+      tags_meta.each { |tag| r.srem(key_meta, tag) if tag_safe_to_delete?( host , tag, options ) }
+      #tags_meta.each { |tag| r.srem(key_meta, tag) }
 
       if r.sismember(key, 'SKIP')
         skip_host = true
@@ -223,7 +224,8 @@ module Hosttag
       recheck_for_skip = true if tag == 'SKIP'
 
       tag_key = r.get_key('tag', tag)
-      hosts.each { |host| r.srem(tag_key, host + "_meta") if tag_safe_to_delete?( host , tag ) }
+      hosts.each { |host| r.srem(tag_key, host + "_meta") if tag_safe_to_delete?( host , tag, options ) }
+      #hosts.each { |host| r.srem(tag_key, host + "_meta") }
       hosts.each { |host| r.srem(tag_key, host) }
 
       # Delete from all_tags sets
@@ -402,11 +404,9 @@ module Hosttag
         results << t 
         next 
       end
-      options[:type] = :tag
-      res = hosttag_lookup(t , options)
+      res = hosttag_lookup_tags(t , options)
       res.each do |r|
-        options[:type] = :host
-        if hosttag_lookup(r , options).include? t
+        if hosttag_lookup_hosts(r , options).include? t
           results << t
         end
       end 
@@ -420,9 +420,13 @@ module Hosttag
   # the following meta tags aaa:: bbb:: however if the host also has 
   # aaa::ccc  (with tags aaa:: ccc::) we will remove needed meta tags
   # this method will stop this from happening
-  def tag_safe_to_delete?( host, tag ) 
+  def tag_safe_to_delete?( host, tag, options) 
+    r = hosttag_server(options)
+    k = r.get_key(:host, host)
+    return true unless r.exists(k) # if host does not exist any more safe to delete!
+
     count = 0
-    tags = hosttag_lookup(host , { :type => :host })
+    tags = hosttag_lookup_hosts(host , options)
     tags.each do |t|
       ns_tags = extract_namespaces_from_tags( t )  
       count += 1 if ns_tags.include? tag 
