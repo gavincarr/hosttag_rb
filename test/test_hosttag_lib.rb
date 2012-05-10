@@ -20,11 +20,15 @@ class TestHosttagLib < Test::Unit::TestCase
   # format: args (array), options (hash) => expected (array)
   TAGSET = [
     [ %w{centos},           {},                 %w{a m n} ],
+    [ %w{centos?},          {},                 %w{a m n} ],
     [ %w{laptop},           {},                 %w{n} ],
     [ %w{vps},              {},                 %w{m} ],
     [ %w{laptop vps},       {},                 %w{} ],
     [ %w{laptop vps},       { :rel => :and },   %w{} ],
     [ %w{laptop vps},       { :rel => :or },    %w{m n} ],
+    [ %w{centos5-* vps},    {},                 %w{} ],
+    [ %w{centos5-* vps},    { :rel => :or },    %w{a m n} ],
+    [ %w{centos5-* vps},    { :rel => :and },   %w{} ],
   ]
   HOSTSET = [
     [ %w{n},                {},                 %w{centos centos5 centos5-i386 laptop} ],

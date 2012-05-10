@@ -53,6 +53,13 @@ class TestHosttagBin < Test::Unit::TestCase
     [ 'centos foo',             %r{ \btag\b  .* not\sfound }x ],
     [ '-t foo',                 %r{ \bhost\b .* not\sfound }x ],
     [ '-t n foo',               %r{ \bhost\b .* not\sfound }x ],
+    # search globbing tests
+    [ 'centos5-*',              'a n' ],
+    [ 'vps centos5-*',          '' ],
+    [ '-o vps centos5-*',       'a m n' ],
+    [ '*ublic',                 'a m' ],
+    [ '*4-*',                   'm' ],
+    [ '*-*',                    'a m n' ],
   ]
 
   def test_hosttag
