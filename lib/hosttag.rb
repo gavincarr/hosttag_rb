@@ -320,8 +320,8 @@ module Hosttag
       temp = r.keys("#{ns}::#{type}:" + a)
       raise "Error: #{type} '#{a}' not found." if temp.empty?
       keys << temp
-      keys.flatten!
     end
+    keys.flatten!
 
     # Lookup and return
     if keys.length == 1
