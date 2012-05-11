@@ -1,5 +1,6 @@
 
 require 'hosttag/server'
+require 'pp'
 
 module Hosttag
 
@@ -295,6 +296,7 @@ module Hosttag
   def lookup_keys(*args)
     options = args.last.is_a?(Hash) ? args.pop : {}
     args.flatten!
+    ns = options[:namespace] || "hosttag"
 
     type = options[:type]
     throw "Required option 'type' missing" if not type
@@ -313,12 +315,13 @@ module Hosttag
     $stderr.puts "+ keys: #{keys.join(' ')}" if options[:debug]
 
     # Check all keys exist
-    keys.each do |k|
-      if not r.exists(k)
-        item = k.sub(%r{^[^:]+::[^:]+:}, '')
-        raise "Error: #{type} '#{item}' not found."
-      end
+    keys =[]
+    args.each do |a|
+      temp = r.keys("#{ns}::#{type}:" + a)
+      raise "Error: #{type} '#{a}' not found." if temp.empty?
+      keys << temp
     end
+    keys.flatten!
 
     # Lookup and return
     if keys.length == 1
