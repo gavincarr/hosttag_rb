@@ -19,21 +19,28 @@ class TestHosttagLib < Test::Unit::TestCase
 
   # format: args (array), options (hash) => expected (array)
   TAGSET = [
-    [ %w{centos},           {},                 %w{a m n} ],
-    [ %w{laptop},           {},                 %w{n} ],
-    [ %w{vps},              {},                 %w{m} ],
+    [ %w{centos},           {},                 %w{aud001 nzd001 nzd002} ],
+    [ %w{centos*},          {},                 %w{aud001 nzd001 nzd002} ],
+    [ %w{centos4*},         {},                 %w{nzd001} ],
+    [ %w{*4},               {},                 %w{aud001 nzd001} ],
+    [ %w{centos?},          {},                 %w{aud001 nzd001 nzd002} ],
+    [ %w{laptop},           {},                 %w{nzd002} ],
+    [ %w{vps},              {},                 %w{nzd001} ],
     [ %w{laptop vps},       {},                 %w{} ],
     [ %w{laptop vps},       { :rel => :and },   %w{} ],
-    [ %w{laptop vps},       { :rel => :or },    %w{m n} ],
+    [ %w{laptop vps},       { :rel => :or },    %w{nzd001 nzd002} ],
+    [ %w{centos5-* vps},    {},                 %w{} ],
+    [ %w{centos5-* vps},    { :rel => :or },    %w{aud001 nzd001 nzd002} ],
+    [ %w{centos5-* vps},    { :rel => :and },   %w{} ],
   ]
   HOSTSET = [
-    [ %w{n},                {},                 %w{centos centos5 centos5-i386 laptop} ],
-    [ %w{a},                {},                 %w{centos centos5 centos5-x86_64 public} ],
-    [ %w{m},                {},                 %w{centos centos4 centos4-x86_64 public vps} ],
-    [ %w{a n},              {},                 %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
-    [ %w{a n},              { :rel => :or },    %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
-    [ %w{a n},              { :rel => :and },   %w{centos centos5} ],
-    [ %w{a n m},            { :rel => :and },   %w{centos} ],
+    [ %w{nzd002},           {},                 %w{centos centos5 centos5-i386 laptop} ],
+    [ %w{aud001},           {},                 %w{centos centos5 centos5-x86_64 public} ],
+    [ %w{nzd001},           {},                 %w{centos centos4 centos4-x86_64 public vps} ],
+    [ %w{aud001 nzd002},    {},                 %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
+    [ %w{aud001 nzd002},    { :rel => :or },    %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
+    [ %w{aud001 nzd002},    { :rel => :and },   %w{centos centos5} ],
+    [ %w{aud001 nzd002 nzd001},       { :rel => :and },   %w{centos} ],
   ]
 
   def test_hosttag_lookup
@@ -80,8 +87,8 @@ class TestHosttagLib < Test::Unit::TestCase
 
   # format: options (hash) => expected (array)
   HOSTSET_ALL = [
-    [ {},                           %w{a m n} ],
-    [ { :include_skip? => true },   %w{a g h m n} ],
+    [ {},                           %w{aud001 nzd001 nzd002} ],
+    [ { :include_skip? => true },   %w{aud001 gbp004 nzd001 nzd002 usd003} ],
   ]
   def test_hosttag_all_hosts
     HOSTSET_ALL.each do |opts, expected|
