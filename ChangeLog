@@ -1,6 +1,9 @@
 ChangeLog
 ---------
 
+0.13 - 2012-05-11
+* Add glob support on tags and hosts (Nathan Norton).
+
 0.12 - 2011-11-21
 * Fix smembers buglet for 1.9.x compatibility (Alexis Letessier).
 * Change from ftools to fileutils for compatibility with 1.9.x (Alexis Letessier).

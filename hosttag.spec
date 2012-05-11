@@ -2,7 +2,7 @@
 
 Summary: Hosttag client
 Name: hosttag
-Version: 0.12
+Version: 0.13
 Release: 1%{org_tag}%{dist}
 URL: http://www.openfusion.com.au/labs/
 Source0: http://www.openfusion.com.au/labs/dist/%{name}-%{version}.tar.gz
@@ -86,6 +86,9 @@ test "%{buildroot}" != "/" && rm -rf %{buildroot}
 %attr(0700,root,root) %{_bindir}/htimport
 
 %changelog
+* Fri May 11 2012 Gavin Carr <gavin@openfusion.com.au> 0.13
+- Add globbing support on hosts and keys (Nathan Norton).
+
 * Mon Nov 21 2011 Gavin Carr <gavin@openfusion.com.au> 0.12
 - Cleanups and tweaks for better compatibility with ruby 1.9.x.
 
