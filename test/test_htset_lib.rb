@@ -107,6 +107,20 @@ class TestHtsetLib < Test::Unit::TestCase
       [],
       [],
     ],
+    [
+      %w{htset ns namespace2::dc1::rack2},
+      %w{ns},
+      %w{ns},
+      %w{namespace2::dc1::rack2},
+      %w{namespace2::dc1::rack2},
+    ],
+    [
+      %w{htdel ns namespace2::dc1::rack2},
+      [],
+      [],
+      [],
+      [],
+    ],
   ]
 
   def test_hosttag_add_delete_tags

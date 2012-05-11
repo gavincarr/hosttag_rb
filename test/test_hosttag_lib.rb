@@ -25,15 +25,23 @@ class TestHosttagLib < Test::Unit::TestCase
     [ %w{laptop vps},       {},                 %w{} ],
     [ %w{laptop vps},       { :rel => :and },   %w{} ],
     [ %w{laptop vps},       { :rel => :or },    %w{m n} ],
+    # namespace tests
+    [ %w{public namespace2::prod::engine},       { :rel => :or },    %w{a m} ],
+    [ %w{namespace2::},     {},                 %w{a m n} ],
+    [ %w{namespace2::dc1},  {},                 %w{a m n} ],
+    [ %w{rack1::},          {},                 %w{m} ],
   ]
   HOSTSET = [
-    [ %w{n},                {},                 %w{centos centos5 centos5-i386 laptop} ],
-    [ %w{a},                {},                 %w{centos centos5 centos5-x86_64 public} ],
-    [ %w{m},                {},                 %w{centos centos4 centos4-x86_64 public vps} ],
-    [ %w{a n},              {},                 %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
-    [ %w{a n},              { :rel => :or },    %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
-    [ %w{a n},              { :rel => :and },   %w{centos centos5} ],
+    [ %w{n},                {},                 %w{centos centos5 centos5-i386 laptop namespace2::dc1::rack2} ],
+    [ %w{a},                {},                 %w{centos centos5 centos5-x86_64 namespace1::test namespace2::dc1::rack2 namespace2::staging::engine public} ],
+    [ %w{m},                {},                 %w{centos centos4 centos4-x86_64 namespace2::dc1::rack1 namespace2::prod::engine public vps} ],
+    [ %w{a n},              {},                 %w{centos centos5 centos5-i386 centos5-x86_64 laptop namespace1::test namespace2::dc1::rack2 namespace2::staging::engine public} ],
+    [ %w{a n},              { :rel => :or },    %w{centos centos5 centos5-i386 centos5-x86_64 laptop namespace1::test namespace2::dc1::rack2 namespace2::staging::engine public} ],
+    [ %w{a n},              { :rel => :and },   %w{centos centos5 namespace2::dc1::rack2} ],
     [ %w{a n m},            { :rel => :and },   %w{centos} ],
+    # namespace tests 
+    [ %w{a_meta},           {},                 %w{dc1:: dc1::rack2 engine:: namespace1:: namespace2:: namespace2::dc1 namespace2::staging rack2:: staging:: staging::engine test::} ],
+    
   ]
 
   def test_hosttag_lookup
@@ -67,8 +75,8 @@ class TestHosttagLib < Test::Unit::TestCase
 
   # format: options (hash) => expected (array)
   TAGSET_ALL = [
-    [ {},                           %w{centos centos4 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps} ],
-    [ { :include_skip? => true },   %w{SKIP centos centos4 centos4-i386 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop public vps} ],
+    [ {},                           %w{centos centos4 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop namespace1::test namespace2::dc1::rack1 namespace2::dc1::rack2 namespace2::prod::engine namespace2::staging::engine public vps} ],
+    [ { :include_skip? => true },   %w{SKIP centos centos4 centos4-i386 centos4-x86_64 centos5 centos5-i386 centos5-x86_64 laptop namespace1::test namespace2::dc1::rack1 namespace2::dc1::rack2 namespace2::prod::engine namespace2::staging::engine public vps} ],
   ]
   def test_hosttag_all_tags
     TAGSET_ALL.each do |opts, expected|

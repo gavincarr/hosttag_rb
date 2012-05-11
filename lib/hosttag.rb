@@ -1,5 +1,7 @@
 
 require 'hosttag/server'
+require 'set'
+require 'pp'
 
 module Hosttag
 
@@ -82,7 +84,8 @@ module Hosttag
     r = hosttag_server(options)
     key = r.get_key(options[:include_skip?] ? 'all_hosts_full' : 'all_hosts')
     $stderr.puts "+ key: #{key}" if options[:debug]
-    return r.smembers(key).sort
+    ret =  r.smembers(key).sort
+    return ret.map { |r| r.gsub(/_meta/,"") }.to_set.to_a.sort
   end
 
   # Return an array of all tags
@@ -94,19 +97,26 @@ module Hosttag
     r = hosttag_server(options)
     key = r.get_key(options[:include_skip?] ? 'all_tags_full' : 'all_tags')
     $stderr.puts "+ key: #{key}" if options[:debug]
-    return r.smembers(key).sort
+    ret = r.smembers(key).sort
+    return remove_metadata_tags( ret, options )
   end
 
   # Add the given tags to all the given hosts
   def hosttag_add_tags(hosts, tags, options)
     r = hosttag_server(options)
 
+    tags_meta = extract_namespaces_from_tags( tags ) 
+
     # Add tags to each host
     skip_host = {}
     all_hosts_skip_hosts = true
     hosts.each do |host|
+      host_meta = host + "_meta"
+
       key = r.get_key('host', host)
       tags.each { |tag| r.sadd(key, tag) }
+      key_meta = r.get_key('host', host_meta)
+      tags_meta.each { |tag| r.sadd(key_meta, tag) }
 
       if r.sismember(key, 'SKIP')
         skip_host[host] = true
@@ -120,27 +130,33 @@ module Hosttag
       # all_hosts shouldn't include SKIP hosts, so those we remove
       if skip_host[host]
         r.srem(all_hosts, host)
+        r.srem(all_hosts, host_meta)
       else
         r.sadd(all_hosts, host)
+        r.sadd(all_hosts, host_meta)
       end
       r.sadd(all_hosts_full, host)
+      r.sadd(all_hosts_full, host_meta)
     end
 
     # Add hosts to each tag
     recheck_for_skip = false
-    tags.each do |tag|
+    tags_total = tags + tags_meta
+    tags_total.each do |tag|
       # If we've added a SKIP tag to these hosts, flag to do some extra work
       recheck_for_skip = true if tag == 'SKIP'
 
       key = r.get_key('tag', tag)
       hosts.each do |host|
+        host_meta = host + "_meta"
         # The standard case is to add the host to the list for this tag.
         # But we don't want SKIP hosts being included in these lists, so
         # for them we actually do a remove to make sure they're omitted.
         if skip_host[host] and tag != 'SKIP'
           r.srem(key, host)
         else
-          r.sadd(key, host)
+          r.sadd(key, host) if tags.include? tag
+          r.sadd(key, host_meta) if tags_meta.include? tag
         end
       end
 
@@ -159,11 +175,18 @@ module Hosttag
   def hosttag_delete_tags(hosts, tags, options)
     r = hosttag_server(options)
 
+    tags_meta = extract_namespaces_from_tags( tags )
+
     # Delete tags from each host
     non_skip_host = {}
     hosts.each do |host|
+      host_meta = host + "_meta"
+
       key = r.get_key('host', host)
       tags.each { |tag| r.srem(key, tag) }
+      key_meta = r.get_key('host', host_meta)
+      tags_meta.each { |tag| r.srem(key_meta, tag) if tag_safe_to_delete?( host , tag, options ) }
+      #tags_meta.each { |tag| r.srem(key_meta, tag) }
 
       if r.sismember(key, 'SKIP')
         skip_host = true
@@ -177,13 +200,17 @@ module Hosttag
       # If all tags have been deleted, or this is a SKIP host, remove from all_hosts
       if r.scard(key) == 0 or skip_host
         r.srem(all_hosts, host)
+        r.srem(all_hosts, host_meta)
       else
         # NB: we explicitly add here in case we've deleted a SKIP tag
         r.sadd(all_hosts, host)
+        r.sadd(all_hosts, host_meta)
       end
       if r.scard(key) == 0
         r.srem(all_hosts_full, host)
         r.del(key)
+        r.srem(all_hosts_full, host_meta)
+        r.del(key_meta)
       end
     end
 
@@ -191,11 +218,14 @@ module Hosttag
     recheck_for_skip = false
     all_tags = r.get_key('all_tags')
     all_tags_full = r.get_key('all_tags_full')
-    tags.each do |tag|
+    tags_total = tags_meta + tags
+    tags_total.each do |tag|
       # If we've deleted a SKIP tag from these hosts, flag to do some extra work
       recheck_for_skip = true if tag == 'SKIP'
 
       tag_key = r.get_key('tag', tag)
+      hosts.each { |host| r.srem(tag_key, host + "_meta") if tag_safe_to_delete?( host , tag, options ) }
+      #hosts.each { |host| r.srem(tag_key, host + "_meta") }
       hosts.each { |host| r.srem(tag_key, host) }
 
       # Delete from all_tags sets
@@ -321,13 +351,88 @@ module Hosttag
     end
 
     # Lookup and return
+    ret = ""
     if keys.length == 1
-      r.smembers(keys[0]).sort
+      ret = r.smembers(keys[0]).to_set.to_a.sort
     elsif rel == :and
-      r.sinter(*keys).sort
+      ret = r.sinter(*keys).to_set.to_a.sort
     else
-      r.sunion(*keys).sort
+      ret = r.sunion(*keys).to_set.to_a.sort
     end
+    
+    ret.map { |r| r.gsub(/_meta/,"") } 
+  end
+
+  # for a given set of tags extract out a list of all the 
+  # namespaces for use in the metadata host data set.
+  # Eg: tags=["centos","test::sydney::dc1::rack2","prod::sydney::dc2::rack4"]
+  # we will return an array consisting of the namespaces.
+  # EG: res=["test::sydney::dc1","test::sydney","test::","sydney::dc1::rack2",
+  # "sydney::dc1","sydney::","rack2::","prod::sydney::dc2","prod::sydney",
+  # "sydney::dc2::rack4","sydney::dc2","sydney::","dc2::rack4","rack4::"]
+  # These tags will not show up in normal results BUT you can search on them 
+  # to get lists of hosts, for example ht sydney::dc2 will return a list of 
+  # all hosts in sydney and dc2.
+  def extract_namespaces_from_tags( tags )
+    result = []
+    tags.each do |t|
+      next unless  t.include? "::"
+
+      a = t.split("::")
+      
+      until a.empty?  do
+        first = a.shift
+        c = Array.new a
+
+        result << first + "::"
+        c.each do |cc|
+          element = result.last + "::" + cc
+          element.gsub!(/::::/, '::')
+          result << element unless tags.include? element
+        end
+      end
+    end
+    result.to_set.to_a # return unique elements (.uniq() does not work here)
+  end
+
+  # remove the metadata results from the set of all tags that is returned 
+  # when the hosttag_all_tags is used. 
+  def remove_metadata_tags( tags , options) 
+    results = []
+    tags.each do |t|
+      unless t.include? "::"
+        results << t 
+        next 
+      end
+      res = hosttag_lookup_tags(t , options)
+      res.each do |r|
+        if hosttag_lookup_hosts(r , options).include? t
+          results << t
+        end
+      end 
+    end
+    results.to_set.to_a.sort
+  end
+
+  # when we delete a tag we also need to delete the correspoding 
+  # meta tags, however we need to check that a meta tag is still not 
+  # being used before deleting, for example TAG aaa::bbb will have 
+  # the following meta tags aaa:: bbb:: however if the host also has 
+  # aaa::ccc  (with tags aaa:: ccc::) we will remove needed meta tags
+  # this method will stop this from happening
+  def tag_safe_to_delete?( host, tag, options) 
+    r = hosttag_server(options)
+    k = r.get_key(:host, host)
+    return true unless r.exists(k) # if host does not exist any more safe to delete!
+
+    count = 0
+    tags = hosttag_lookup_hosts(host , options)
+    tags.each do |t|
+      ns_tags = extract_namespaces_from_tags( t )  
+      count += 1 if ns_tags.include? tag 
+    end
+    return false if count > 0 
+    return true
   end
 
   # If we've added or removed a SKIP tag, we now have to recheck all tags for
