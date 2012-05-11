@@ -40,7 +40,13 @@ class TestHosttagLib < Test::Unit::TestCase
     [ %w{aud001 nzd002},    {},                 %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
     [ %w{aud001 nzd002},    { :rel => :or },    %w{centos centos5 centos5-i386 centos5-x86_64 laptop public} ],
     [ %w{aud001 nzd002},    { :rel => :and },   %w{centos centos5} ],
-    [ %w{aud001 nzd002 nzd001},       { :rel => :and },   %w{centos} ],
+    [ %w{aud001 nzd002 nzd001}, { :rel => :and }, %w{centos} ],
+    [ %w{nzd*},             {},                 %w{centos centos4 centos4-x86_64 centos5 centos5-i386 laptop public vps} ],
+    [ %w{nzd*},             { :rel => :or },    %w{centos centos4 centos4-x86_64 centos5 centos5-i386 laptop public vps} ],
+    [ %w{nzd*},             { :rel => :and },   %w{centos} ],
+    [ %w{*001},             {},                 %w{centos centos4 centos4-x86_64 centos5 centos5-x86_64 public vps} ],
+    [ %w{*001},             { :rel => :or },    %w{centos centos4 centos4-x86_64 centos5 centos5-x86_64 public vps} ],
+    [ %w{*001},             { :rel => :and },   %w{centos public} ],
   ]
 
   def test_hosttag_lookup
