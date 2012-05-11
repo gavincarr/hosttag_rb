@@ -38,6 +38,9 @@ Basic Usage
   $ ht -a ubuntu server   # -a/--and ANDs arguments
   athena
 
+  $ ht -o de*             # tags and hosts may include globs (*, ?, [M-N])
+  zeus minerva hermes
+
   $ ht -A                 # all hosts
   athena hermes minerva zeus
 

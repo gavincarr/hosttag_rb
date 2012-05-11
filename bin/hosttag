@@ -16,6 +16,8 @@
 #
 #   ht -T                           Show all tags
 #
+# Hosts and tags may contain glob characters i.e. '*', '?', and [M-N] character sets
+#
 
 require 'optparse'
 

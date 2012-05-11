@@ -7,6 +7,7 @@ module Hosttag
   # If multiple tags are given, by default the list of hosts is those to
   # which ALL of the tags apply i.e. results are ANDed or intersected. To
   # change this, pass :rel => :or in the options hash.
+  # Tags may include glob characters i.e. '*', '?', and [M-N] character sets.
   # The final argument may be an options hash, which accepts the following
   # keys:
   # - :rel - either :and or :or, specifying the relationship to use when
@@ -25,6 +26,7 @@ module Hosttag
   # those applying to ANY of the given hosts i.e. the results are ORed or
   # unioned. To change this pass an explicit :rel => :and in the options
   # hash.
+  # Hosts may include glob characters i.e. '*', '?', and [M-N] character sets.
   # The final argument may be an options hash, which accepts the following
   # keys:
   # - :rel - either :and or :or, specifying the relationship to use when
@@ -42,6 +44,7 @@ module Hosttag
   # as appropriate. If a :type option is not explicitly given, first tries
   # the lookup using hosttag_lookup_tags, and if that fails retries using
   # hosttag_lookup_hosts.
+  # Terms may include glob characters i.e. '*', '?', and [M-N] character sets.
   # The final argument may be an options hash, which accepts the following
   # keys:
   # - :type - either :host or :tag, specifying how to interpret the given
@@ -286,6 +289,7 @@ module Hosttag
   # Lookup the given keys in the redis datastore, returning an array of
   # results. If more than one key is specified, resultsets are merged
   # (either ANDed or ORed) depending on the value of the :rel option.
+  # Keys may include glob characters i.e. '*', '?', [M-N] character sets.
   # The final argument must be an options hash, which accepts the
   # following options:
   # - :type - specifies the type of keys to lookup, either :host or :tag.
