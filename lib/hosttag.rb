@@ -312,13 +312,17 @@ module Hosttag
     keys = args.collect {|v| r.get_key(type, v) }
     $stderr.puts "+ keys: #{keys.join(' ')}" if options[:debug]
 
-    # Check all keys exist
+    # Allow keys to have globs, so expand out
+    expanded_keys = []
     keys.each do |k|
-      if not r.exists(k)
+      temp = r.keys(k)
+      if temp.empty?
         item = k.sub(%r{^[^:]+::[^:]+:}, '')
         raise "Error: #{type} '#{item}' not found."
       end
+      expanded_keys << temp
     end
+    keys = expanded_keys.flatten
 
     # Lookup and return
     if keys.length == 1
