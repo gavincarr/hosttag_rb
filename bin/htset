@@ -146,7 +146,8 @@ if (not options[:all])
       results[:tag].push(*results[:uncertain])
     else
       # TODO: do something useful here - ask the user?
-      die("Error: can't auto-classify '#{results[:uncertain].join(',')}' - aborting")
+      warn("Error: can't determine whether host(s) or tag(s): '#{results[:uncertain].join(',')}'")
+      die("  (use the -H or -T flags to disambiguate)")
     end
   end
 
